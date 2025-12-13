@@ -1,0 +1,9 @@
+node_modules
+*.log
+*.tsbuildinfo
+coverage/
+dist/
+out/
+*.local
+*.test.ts
+*.spec.ts
