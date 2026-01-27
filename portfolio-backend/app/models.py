@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, ARRAY, Date
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Date, JSON
 from sqlalchemy.sql import func
 from app.database import Base
 import uuid
@@ -31,10 +31,10 @@ class Project(Base):
     short_description_en = Column(String(500))
     short_description_fr = Column(String(500))
     image_url = Column(String(500))
-    gallery_urls = Column(ARRAY(String))
+    gallery_urls = Column(JSON)
     project_url = Column(String(500))
     github_url = Column(String(500))
-    technologies = Column(ARRAY(String))
+    technologies = Column(JSON)
     category = Column(String(50))
     start_date = Column(Date)
     end_date = Column(Date)
@@ -60,8 +60,8 @@ class WorkExperience(Base):
     is_current = Column(Boolean, default=False)
     company_logo_url = Column(String(500))
     company_website = Column(String(500))
-    achievements_en = Column(ARRAY(String))
-    achievements_fr = Column(ARRAY(String))
+    achievements_en = Column(JSON)
+    achievements_fr = Column(JSON)
     display_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -84,8 +84,8 @@ class Education(Base):
     is_current = Column(Boolean, default=False)
     grade = Column(String(50))
     logo_url = Column(String(500))
-    achievements_en = Column(ARRAY(String))
-    achievements_fr = Column(ARRAY(String))
+    achievements_en = Column(JSON)
+    achievements_fr = Column(JSON)
     display_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

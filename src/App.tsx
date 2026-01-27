@@ -139,7 +139,7 @@ export default function App() {
       >
         <TiltedCard />
         <div className="relative z-10 w-full h-screen flex items-center justify-center">
-          <AsciiText3D text="PORTFOLIO" asciiFontSize={4} enableWaves={false} />
+          <AsciiText3D text="LEGAGNEUR" asciiFontSize={4} enableWaves={false} />
         </div>
         
         <motion.div
@@ -181,15 +181,30 @@ export default function App() {
               className="text-4xl leading-relaxed text-white/90"
               style={{ fontFamily: 'system-ui, sans-serif', fontWeight: 300 }}
             >
-              Full-stack developer passionate about creating innovative solutions and beautiful user experiences.
+              I'm Sebastien Legagneur, a passionate full-stack developer and Computer Science student at Champlain College St-Lambert.
             </p>
             <p 
               className="text-3xl leading-relaxed text-white/70"
               style={{ fontFamily: 'system-ui, sans-serif', fontWeight: 300 }}
             >
-              Specialized in React, TypeScript, Spring Boot, and modern web technologies.
-              Building scalable applications with attention to design and performance.
+              With expertise in Java, Python, JavaScript, and modern frameworks like React and Spring Boot, I specialize in building scalable web applications with clean, efficient code. I'm proficient in both frontend and backend development, utilizing tools like Docker, AWS, and Git for seamless deployment and collaboration.
             </p>
+            <p 
+              className="text-3xl leading-relaxed text-white/70"
+              style={{ fontFamily: 'system-ui, sans-serif', fontWeight: 300 }}
+            >
+              I thrive in Agile environments and have experience working on diverse projects, from stock prediction interfaces to full-stack clinic management systems. My passion lies in creating innovative solutions that combine technical excellence with exceptional user experiences.
+            </p>
+            <p 
+              className="text-3xl leading-relaxed text-white/70"
+              style={{ fontFamily: 'system-ui, sans-serif', fontWeight: 300 }}
+            >
+              Beyond coding, I'm a piano teacher and active in the Champlain College music community, where I organize events and lead activities as an iLEAD executive member.
+            </p>
+            
+            <div className="pt-8">
+              <DownloadCVButton className="bg-white text-black hover:bg-white/90 text-xl px-8 py-4" />
+            </div>
           </motion.div>
         </div>
       </section>
@@ -234,7 +249,7 @@ export default function App() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-2xl font-bold" style={{ fontFamily: 'GT Pressura, sans-serif' }}>
-                      {skill.nameEn}
+                      {skill.name_en}
                     </h3>
                     <Code className="w-6 h-6 text-white/50 group-hover:text-white/80 transition-colors" />
                   </div>
@@ -296,14 +311,14 @@ export default function App() {
                 >
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-4xl font-bold" style={{ fontFamily: 'GT Pressura, sans-serif' }}>
-                      {project.titleEn}
+                      {project.title_en}
                     </h3>
-                    {project.isFeatured && (
+                    {project.is_featured && (
                       <span className="px-3 py-1 bg-white/20 text-sm uppercase tracking-wider">Featured</span>
                     )}
                   </div>
                   <p className="text-xl text-white/70 mb-6">
-                    {project.shortDescriptionEn || project.descriptionEn.substring(0, 150) + '...'}
+                    {project.short_description_en || (project.description_en ? project.description_en.substring(0, 150) + '...' : 'No description available')}
                   </p>
                   
                   {project.technologies && project.technologies.length > 0 && (
@@ -317,20 +332,20 @@ export default function App() {
                   )}
                   
                   <div className="flex gap-4">
-                    {project.projectUrl && (
+                    {project.project_url && (
                       <a
-                        href={project.projectUrl}
+                        href={project.project_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 border-2 border-white/20 hover:border-white/60 transition-all duration-300 text-white/80 hover:text-white"
                       >
-                        <ExternalLink className="w-5 h-5" />
-                        <span>View Project</span>
+                        <ExternalLink className="w-4 h-4" />
+                        View Project
                       </a>
                     )}
-                    {project.githubUrl && (
+                    {project.github_url && (
                       <a
-                        href={project.githubUrl}
+                        href={project.github_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
@@ -368,7 +383,6 @@ export default function App() {
             >
               Experience
             </h2>
-            <DownloadCVButton className="bg-white text-black hover:bg-white/90 text-lg px-6 py-3 whitespace-nowrap" />
           </motion.div>
           
           {loading ? (
@@ -389,9 +403,9 @@ export default function App() {
                   <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
                     <div>
                       <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: 'GT Pressura, sans-serif' }}>
-                        {exp.positionEn}
+                        {exp.position_en}
                       </h3>
-                      <p className="text-xl text-white/80">{exp.companyName}</p>
+                      <p className="text-xl text-white/80">{exp.company_name}</p>
                     </div>
                     <Briefcase className="w-8 h-8 text-white/50" />
                   </div>
@@ -399,17 +413,19 @@ export default function App() {
                   <div className="flex flex-wrap items-center gap-4 text-white/60 mb-4">
                     <span className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      {new Date(exp.startDate).getFullYear()} - {exp.isCurrent ? 'Present' : new Date(exp.endDate!).getFullYear()}
+                      {new Date(exp.start_date).getFullYear()} - {exp.is_current ? 'Present' : new Date(exp.end_date!).getFullYear()}
                     </span>
                     {exp.location && <span>• {exp.location}</span>}
-                    {exp.employmentType && <span>• {exp.employmentType}</span>}
+                    {exp.employment_type && <span>• {exp.employment_type}</span>}
                   </div>
                   
-                  <p className="text-lg text-white/70 mb-4">{exp.descriptionEn}</p>
+                  {exp.description_en && (
+                    <p className="text-lg text-white/70 mb-4">{exp.description_en}</p>
+                  )}
                   
-                  {exp.achievementsEn && exp.achievementsEn.length > 0 && (
+                  {exp.achievements_en && exp.achievements_en.length > 0 && (
                     <ul className="space-y-2">
-                      {exp.achievementsEn.map((achievement, i) => (
+                      {exp.achievements_en.map((achievement, i) => (
                         <li key={i} className="text-white/60 flex items-start gap-3">
                           <span className="text-white/40 mt-1">•</span>
                           <span>{achievement}</span>
@@ -465,10 +481,10 @@ export default function App() {
                   <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
                     <div>
                       <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: 'GT Pressura, sans-serif' }}>
-                        {edu.degreeEn}
+                        {edu.degree_en}
                       </h3>
-                      <p className="text-xl text-white/80">{edu.institutionName}</p>
-                      <p className="text-lg text-white/60">{edu.fieldOfStudyEn}</p>
+                      <p className="text-xl text-white/80">{edu.institution_name}</p>
+                      <p className="text-lg text-white/60">{edu.field_of_study_en}</p>
                     </div>
                     <GraduationCap className="w-8 h-8 text-white/50" />
                   </div>
@@ -476,19 +492,19 @@ export default function App() {
                   <div className="flex flex-wrap items-center gap-4 text-white/60 mb-4">
                     <span className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      {new Date(edu.startDate).getFullYear()} - {edu.isCurrent ? 'Present' : new Date(edu.endDate!).getFullYear()}
+                      {new Date(edu.start_date).getFullYear()} - {edu.is_current ? 'Present' : new Date(edu.end_date!).getFullYear()}
                     </span>
                     {edu.location && <span>• {edu.location}</span>}
                     {edu.grade && <span>• {edu.grade}</span>}
                   </div>
                   
-                  {edu.descriptionEn && (
-                    <p className="text-lg text-white/70 mb-4">{edu.descriptionEn}</p>
+                  {edu.description_en && (
+                    <p className="text-lg text-white/70 mb-4">{edu.description_en}</p>
                   )}
                   
-                  {edu.achievementsEn && edu.achievementsEn.length > 0 && (
+                  {edu.achievements_en && edu.achievements_en.length > 0 && (
                     <ul className="space-y-2">
-                      {edu.achievementsEn.map((achievement, i) => (
+                      {edu.achievements_en.map((achievement, i) => (
                         <li key={i} className="text-white/60 flex items-start gap-3">
                           <span className="text-white/40 mt-1">•</span>
                           <span>{achievement}</span>

@@ -6,13 +6,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Database URL - update with your credentials
+# Database URL - using SQLite for easier setup
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://portfolio_user:your_password_here@localhost:5432/portfolio_db"
+    "sqlite:///./portfolio.db"
 )
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

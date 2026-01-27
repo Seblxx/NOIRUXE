@@ -2,25 +2,25 @@ import { api } from '@/lib/api';
 
 export interface Project {
   id: string;
-  titleEn: string;
-  titleFr: string;
-  descriptionEn: string;
-  descriptionFr: string;
-  shortDescriptionEn?: string;
-  shortDescriptionFr?: string;
-  imageUrl?: string;
-  galleryUrls?: string[];
-  projectUrl?: string;
-  githubUrl?: string;
+  title_en: string;
+  title_fr: string;
+  description_en: string;
+  description_fr: string;
+  short_description_en?: string;
+  short_description_fr?: string;
+  image_url?: string;
+  gallery_urls?: string[];
+  project_url?: string;
+  github_url?: string;
   technologies?: string[];
   category?: string;
-  startDate?: string;
-  endDate?: string;
-  isFeatured: boolean;
-  displayOrder: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  start_date?: string;
+  end_date?: string;
+  is_featured: boolean;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const getProjects = async (): Promise<Project[]> => {

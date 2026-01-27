@@ -13,7 +13,7 @@ export function DownloadCVButton({ className }: DownloadCVButtonProps) {
     // Create a temporary anchor element
     const link = document.createElement('a');
     link.href = cvPath;
-    link.download = 'CV.pdf';
+    link.download = 'Sebastien_Legagneur_CV.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -22,11 +22,12 @@ export function DownloadCVButton({ className }: DownloadCVButtonProps) {
   return (
     <Button
       onClick={handleDownload}
-      className={`group flex items-center gap-3 ${className || ''}`}
+      className={`group relative flex items-center gap-3 overflow-hidden border-2 transition-all duration-300 ${className || ''}`}
       variant="outline"
     >
-      <Download className="w-5 h-5 group-hover:animate-bounce" />
-      <span>Download CV</span>
+      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <Download className="w-5 h-5 group-hover:scale-110 transition-transform duration-300 relative z-10" />
+      <span className="relative z-10 font-semibold">Download CV</span>
     </Button>
   );
 }

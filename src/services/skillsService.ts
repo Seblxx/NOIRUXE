@@ -2,15 +2,15 @@ import { api } from '@/lib/api';
 
 export interface Skill {
   id: string;
-  nameEn: string;
-  nameFr: string;
+  name_en: string;
+  name_fr: string;
   category: string;
   proficiency: number;
-  iconUrl?: string;
-  displayOrder: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  icon_url?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const getSkills = async (): Promise<Skill[]> => {

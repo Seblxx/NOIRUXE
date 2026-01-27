@@ -2,24 +2,24 @@ import { api } from '@/lib/api';
 
 export interface WorkExperience {
   id: string;
-  companyName: string;
-  positionEn: string;
-  positionFr: string;
-  descriptionEn: string;
-  descriptionFr: string;
+  company_name: string;
+  position_en: string;
+  position_fr: string;
+  description_en: string;
+  description_fr: string;
   location?: string;
-  employmentType?: string;
-  startDate: string;
-  endDate?: string;
-  isCurrent: boolean;
-  companyLogoUrl?: string;
-  companyWebsite?: string;
-  achievementsEn?: string[];
-  achievementsFr?: string[];
-  displayOrder: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  employment_type?: string;
+  start_date: string;
+  end_date?: string;
+  is_current: boolean;
+  company_logo_url?: string;
+  company_website?: string;
+  achievements_en?: string[];
+  achievements_fr?: string[];
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const getWorkExperience = async (): Promise<WorkExperience[]> => {
