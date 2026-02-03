@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app.models import Skill
-from app.schemas import SkillCreate, SkillResponse
+from app.schemas import SkillCreate, SkillResponse, SkillUpdate
+from app.auth import get_current_user
 
 router = APIRouter()
 
@@ -28,8 +29,12 @@ async def get_skill(skill_id: str, db: Session = Depends(get_db)):
     return skill
 
 @router.post("", response_model=SkillResponse, status_code=201)
-async def create_skill(skill: SkillCreate, db: Session = Depends(get_db)):
-    """Create a new skill"""
+async def create_skill(
+    skill: SkillCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new skill (admin only)"""
     db_skill = Skill(**skill.dict())
     db.add(db_skill)
     db.commit()
@@ -37,13 +42,18 @@ async def create_skill(skill: SkillCreate, db: Session = Depends(get_db)):
     return db_skill
 
 @router.put("/{skill_id}", response_model=SkillResponse)
-async def update_skill(skill_id: str, skill: SkillCreate, db: Session = Depends(get_db)):
-    """Update an existing skill"""
+async def update_skill(
+    skill_id: str,
+    skill: SkillUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an existing skill (admin only)"""
     db_skill = db.query(Skill).filter(Skill.id == skill_id).first()
     if not db_skill:
         raise HTTPException(status_code=404, detail="Skill not found")
     
-    for key, value in skill.dict().items():
+    for key, value in skill.dict(exclude_unset=True).items():
         setattr(db_skill, key, value)
     
     db.commit()
@@ -51,8 +61,12 @@ async def update_skill(skill_id: str, skill: SkillCreate, db: Session = Depends(
     return db_skill
 
 @router.delete("/{skill_id}")
-async def delete_skill(skill_id: str, db: Session = Depends(get_db)):
-    """Delete a skill"""
+async def delete_skill(
+    skill_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a skill (admin only)"""
     db_skill = db.query(Skill).filter(Skill.id == skill_id).first()
     if not db_skill:
         raise HTTPException(status_code=404, detail="Skill not found")

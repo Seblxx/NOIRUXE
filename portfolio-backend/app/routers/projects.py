@@ -4,6 +4,7 @@ from typing import List
 from app.database import get_db
 from app.models import Project
 from app.schemas import ProjectCreate, ProjectResponse
+from app.auth import get_current_user
 
 router = APIRouter()
 
@@ -31,8 +32,12 @@ async def get_project(project_id: str, db: Session = Depends(get_db)):
     return project
 
 @router.post("", response_model=ProjectResponse, status_code=201)
-async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
-    """Create a new project"""
+async def create_project(
+    project: ProjectCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new project (admin only)"""
     db_project = Project(**project.dict())
     db.add(db_project)
     db.commit()
@@ -40,13 +45,18 @@ async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     return db_project
 
 @router.put("/{project_id}", response_model=ProjectResponse)
-async def update_project(project_id: str, project: ProjectCreate, db: Session = Depends(get_db)):
-    """Update an existing project"""
+async def update_project(
+    project_id: str,
+    project: ProjectCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an existing project (admin only)"""
     db_project = db.query(Project).filter(Project.id == project_id).first()
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    for key, value in project.dict().items():
+    for key, value in project.dict(exclude_unset=True).items():
         setattr(db_project, key, value)
     
     db.commit()
@@ -54,8 +64,12 @@ async def update_project(project_id: str, project: ProjectCreate, db: Session = 
     return db_project
 
 @router.delete("/{project_id}")
-async def delete_project(project_id: str, db: Session = Depends(get_db)):
-    """Delete a project"""
+async def delete_project(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a project (admin only)"""
     db_project = db.query(Project).filter(Project.id == project_id).first()
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")

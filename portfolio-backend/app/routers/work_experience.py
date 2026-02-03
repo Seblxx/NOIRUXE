@@ -4,6 +4,7 @@ from typing import List
 from app.database import get_db
 from app.models import WorkExperience
 from app.schemas import WorkExperienceCreate, WorkExperienceResponse
+from app.auth import get_current_user
 
 router = APIRouter()
 
@@ -24,8 +25,12 @@ async def get_work_experience_by_id(experience_id: str, db: Session = Depends(ge
     return experience
 
 @router.post("", response_model=WorkExperienceResponse, status_code=201)
-async def create_work_experience(experience: WorkExperienceCreate, db: Session = Depends(get_db)):
-    """Create a new work experience"""
+async def create_work_experience(
+    experience: WorkExperienceCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new work experience (admin only)"""
     db_experience = WorkExperience(**experience.dict())
     db.add(db_experience)
     db.commit()
@@ -33,13 +38,18 @@ async def create_work_experience(experience: WorkExperienceCreate, db: Session =
     return db_experience
 
 @router.put("/{experience_id}", response_model=WorkExperienceResponse)
-async def update_work_experience(experience_id: str, experience: WorkExperienceCreate, db: Session = Depends(get_db)):
-    """Update an existing work experience"""
+async def update_work_experience(
+    experience_id: str,
+    experience: WorkExperienceCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an existing work experience (admin only)"""
     db_experience = db.query(WorkExperience).filter(WorkExperience.id == experience_id).first()
     if not db_experience:
         raise HTTPException(status_code=404, detail="Work experience not found")
     
-    for key, value in experience.dict().items():
+    for key, value in experience.dict(exclude_unset=True).items():
         setattr(db_experience, key, value)
     
     db.commit()
@@ -47,8 +57,12 @@ async def update_work_experience(experience_id: str, experience: WorkExperienceC
     return db_experience
 
 @router.delete("/{experience_id}")
-async def delete_work_experience(experience_id: str, db: Session = Depends(get_db)):
-    """Delete a work experience"""
+async def delete_work_experience(
+    experience_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a work experience (admin only)"""
     db_experience = db.query(WorkExperience).filter(WorkExperience.id == experience_id).first()
     if not db_experience:
         raise HTTPException(status_code=404, detail="Work experience not found")

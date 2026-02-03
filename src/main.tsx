@@ -1,7 +1,8 @@
 
   import { createRoot } from "react-dom/client";
-  import App from "./App";
+  import AppRouter from "./AppRouter";
   import "./index.css";
+  import "./global.css";
 
-  createRoot(document.getElementById("root")!).render(<App />);
+  createRoot(document.getElementById("root")!).render(<AppRouter />);
   
