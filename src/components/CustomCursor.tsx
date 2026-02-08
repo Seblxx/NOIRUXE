@@ -19,22 +19,14 @@ export function CustomCursor() {
     <>
       {/* Main cursor dot */}
       <div
-        className="fixed w-2 h-2 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference"
+        className="fixed w-2 h-2 bg-white rounded-full pointer-events-none z-[99999] mix-blend-difference"
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
           transform: 'translate(-50%, -50%)',
         }}
       />
-      {/* Cursor ring */}
-      <div
-        className="fixed w-8 h-8 border-2 border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-all duration-150"
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          transform: 'translate(-50%, -50%)',
-        }}
-      />
+  
     </>
   );
 }

@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
-import { ArrowLeft, Github, Linkedin, Mail, Send } from 'lucide-react';
+import { SimpleMenu } from '../components/SimpleMenu';
+import { Github, Linkedin, Mail, Send } from 'lucide-react';
 import * as contactService from '../services/contactService';
+import { useMenuItems } from '../hooks/useMenuItems';
 
 // Glitch text component matching login page
 const GlitchText = ({ text }: { text: string }) => {
@@ -65,6 +67,7 @@ const GlitchText = ({ text }: { text: string }) => {
 
 export const Contact = () => {
   const navigate = useNavigate();
+  const { menuItems } = useMenuItems();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -184,19 +187,8 @@ export const Contact = () => {
       
       {/* Main content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16">
-        {/* Back button - positioned at top left */}
-        <motion.button
-          onClick={() => navigate('/')}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          whileHover={{ x: -5 }}
-          className="fixed top-8 left-8 flex items-center gap-2 text-white/50 hover:text-white transition-colors z-50"
-          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
-        >
-          <ArrowLeft size={18} />
-          <span className="text-sm tracking-widest">HOME</span>
-        </motion.button>
+        {/* Menu */}
+        <SimpleMenu items={menuItems} isExpanded={true} />
 
         {/* Contact card container */}
         <motion.div

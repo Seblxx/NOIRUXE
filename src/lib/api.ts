@@ -24,9 +24,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Redirect to login
-      localStorage.removeItem('token');
-      window.location.href = '/admin/login';
+      const path = window.location.pathname;
+      const protectedPages = ['/testimonials', '/contact', '/projects', '/admin'];
+      if (!protectedPages.some(p => path.startsWith(p))) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

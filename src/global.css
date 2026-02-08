@@ -287,6 +287,30 @@ body * {
   cursor: none !important;
 }
 
+/* Restore text cursor for input fields so users can see where they're typing */
+input,
+textarea,
+input:focus,
+textarea:focus,
+[contenteditable] {
+  cursor: text !important;
+  caret-color: white;
+}
+
+/* Restore cursor inside modals */
+.modal-cursor,
+.modal-cursor * {
+  cursor: default !important;
+}
+.modal-cursor input,
+.modal-cursor textarea {
+  cursor: text !important;
+}
+.modal-cursor button,
+.modal-cursor a {
+  cursor: pointer !important;
+}
+
 /* Allow pointer events on interactive elements */
 button,
 a,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface MenuItem {
   label: string;
@@ -13,6 +14,7 @@ interface SimpleMenuProps {
 
 export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   // Handle spacebar to toggle menu
   useEffect(() => {
@@ -49,7 +51,7 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
                   className="flex items-center gap-2 text-white uppercase tracking-wider"
                   style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
                 >
-                  <span>Menu</span>
+                  <span>{t('menu.menu', 'Menu', 'Menu')}</span>
                   <span className="text-2xl">−</span>
                 </button>
                 
@@ -78,7 +80,7 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
                 className="flex items-center gap-2 text-white uppercase tracking-wider"
                 style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
               >
-                <span>Menu</span>
+                <span>{t('menu.menu', 'Menu', 'Menu')}</span>
                 <span className="text-2xl">+</span>
               </motion.button>
             )}

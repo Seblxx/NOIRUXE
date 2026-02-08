@@ -1,129 +1,253 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CustomCursor } from '../components/CustomCursor';
-import { ArrowLeft, Github, Linkedin, Mail } from 'lucide-react';
+import { TiltedCard } from '../components/TiltedCard';
+import { SimpleMenu } from '../components/SimpleMenu';
+import { Github, Linkedin, Mail, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useMenuItems } from '../hooks/useMenuItems';
+
+// Glitch text component
+const GlitchText = ({ text }: { text: string }) => {
+  const [glitchActive, setGlitchActive] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitchActive(true);
+      setTimeout(() => setGlitchActive(false), 200);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative inline-block">
+      <span
+        className="relative z-10 text-white"
+        style={{
+          fontFamily: "'GT Pressura', sans-serif",
+          textShadow: glitchActive 
+            ? '2px 0 #ff00ff, -2px 0 #00ffff' 
+            : '0 0 20px rgba(255, 255, 255, 0.5)',
+        }}
+      >
+        {text}
+      </span>
+      {glitchActive && (
+        <>
+          <span
+            className="absolute top-0 left-0 z-0"
+            style={{
+              fontFamily: "'GT Pressura', sans-serif",
+              color: '#00ffff',
+              clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)',
+              transform: 'translate(-4px, -2px)',
+              opacity: 0.8,
+            }}
+          >
+            {text}
+          </span>
+          <span
+            className="absolute top-0 left-0 z-0"
+            style={{
+              fontFamily: "'GT Pressura', sans-serif",
+              color: '#ff00ff',
+              clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)',
+              transform: 'translate(4px, 2px)',
+              opacity: 0.8,
+            }}
+          >
+            {text}
+          </span>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Marquee background component
+const MarqueeGlitchText = ({ direction = 1, speed = 20, opacity = 0.1, glowColor = '#00ffff', text = 'ABOUT' }: { direction?: number; speed?: number; opacity?: number; glowColor?: string; text?: string }) => {
+  const [glitchActive, setGlitchActive] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitchActive(true);
+      setTimeout(() => setGlitchActive(false), 150);
+    }, 2000 + Math.random() * 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const marqueeText = `${text} • ${text} • ${text} • ${text} • ${text} • ${text} • ${text} • ${text} • `;
+
+  return (
+    <div 
+      className="whitespace-nowrap"
+      style={{
+        animation: `marquee ${speed}s linear infinite`,
+        animationDirection: direction > 0 ? 'normal' : 'reverse',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "'GT Pressura', sans-serif",
+          fontSize: '8rem',
+          fontWeight: 900,
+          color: glitchActive ? glowColor : 'white',
+          opacity: glitchActive ? opacity * 3 : opacity,
+          textShadow: glitchActive 
+            ? `0 0 30px ${glowColor}, 0 0 60px ${glowColor}` 
+            : 'none',
+          transition: 'all 0.05s',
+        }}
+      >
+        {marqueeText}{marqueeText}
+      </span>
+    </div>
+  );
+};
 
 export const About = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { menuItems } = useMenuItems();
 
-  const content = {
-    en: {
-      title: 'ABOUT ME',
-      subtitle: 'Full-Stack Developer',
-      intro: "I'm Sebastien Legagneur, a passionate Full-Stack Developer based in Montreal, specializing in building modern, responsive web applications with cutting-edge technologies.",
-      description: "With expertise in React, TypeScript, Java Spring Boot, and Python, I create seamless digital experiences that blend elegant design with robust functionality. I'm dedicated to continuous learning and staying at the forefront of web development trends.",
-      skills: 'Core Technologies',
-      experience: 'I have experience working with agile teams, developing full-stack solutions, and creating immersive user interfaces with animations and 3D effects.',
-    },
-    fr: {
-      title: 'À PROPOS',
-      subtitle: 'Développeur Full-Stack',
-      intro: "Je suis Sebastien Legagneur, un développeur Full-Stack passionné basé à Montréal, spécialisé dans la création d'applications web modernes et responsives avec des technologies de pointe.",
-      description: "Avec une expertise en React, TypeScript, Java Spring Boot et Python, je crée des expériences numériques fluides qui allient design élégant et fonctionnalité robuste. Je suis dédié à l'apprentissage continu et à rester à la pointe des tendances du développement web.",
-      skills: 'Technologies Principales',
-      experience: "J'ai de l'expérience de travail avec des équipes agiles, le développement de solutions full-stack, et la création d'interfaces utilisateur immersives avec animations et effets 3D.",
-    }
+  const title = language === 'fr' ? 'À PROPOS' : 'ABOUT';
+  const subtitle = language === 'fr' ? 'Développeur Full-Stack' : 'Full-Stack Developer';
+
+  const content = language === 'fr' ? {
+    intro: "Je suis Sébastien Legagneur, un développeur Full-Stack passionné basé à Montréal, spécialisé dans la création d'applications web modernes et réactives avec des technologies de pointe.",
+    expertise: "Avec une expertise en React, TypeScript, Java Spring Boot et Python, je crée des expériences numériques fluides qui allient design élégant et fonctionnalité robuste. Je suis dédié à l'apprentissage continu et à rester à la pointe des tendances du développement web.",
+    experience: "J'ai de l'expérience de travail avec des équipes agiles, le développement de solutions full-stack, et la création d'interfaces utilisateur immersives avec des animations et des effets 3D."
+  } : {
+    intro: "I'm Sebastien Legagneur, a passionate Full-Stack Developer based in Montreal, specializing in building modern, responsive web applications with cutting-edge technologies.",
+    expertise: "With expertise in React, TypeScript, Java Spring Boot, and Python, I create seamless digital experiences that blend elegant design with robust functionality. I'm dedicated to continuous learning and staying at the forefront of web development trends.",
+    experience: "I have experience working with agile teams, developing full-stack solutions, and creating immersive user interfaces with animations and 3D effects."
   };
 
-  const t = content[language];
-  const coreSkills = ['React', 'TypeScript', 'Java', 'Spring Boot', 'Python', 'PostgreSQL', 'Docker', 'Tailwind CSS'];
+  const technologies = ['React', 'TypeScript', 'Java', 'Spring Boot', 'Python', 'PostgreSQL', 'Docker', 'Tailwind CSS'];
+
+  const socialLinks = [
+    { icon: Github, href: 'https://github.com/Seblxx', label: 'GitHub' },
+    { icon: Linkedin, href: 'https://linkedin.com/in/sebastien-legagneur', label: 'LinkedIn' },
+    { icon: Mail, href: 'mailto:sebmoleg@gmail.com', label: 'Email' },
+  ];
+
+  const handleDownloadCV = () => {
+    const cvPath = '/Media/FINAL CV III.pdf';
+    const link = document.createElement('a');
+    link.href = cvPath;
+    link.download = 'Sebastien_Legagneur_CV.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white crt-effect">
+    <div className="min-h-screen bg-black relative overflow-hidden crt-effect">
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
       <div className="scanline" />
       <CustomCursor />
+      <TiltedCard />
 
-      {/* Back button */}
-      <motion.button
-        onClick={() => navigate('/')}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        whileHover={{ x: -5 }}
-        className="fixed top-8 left-8 flex items-center gap-2 text-white/50 hover:text-white transition-colors z-50"
-        style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
-      >
-        <ArrowLeft size={18} />
-        <span className="text-sm tracking-widest">HOME</span>
-      </motion.button>
+      {/* Marquee background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none flex flex-col justify-center gap-4">
+        <div className="overflow-hidden">
+          <MarqueeGlitchText direction={1} speed={15} opacity={0.08} glowColor="#00ffff" text={title} />
+        </div>
+        <div className="overflow-hidden">
+          <MarqueeGlitchText direction={-1} speed={18} opacity={0.12} glowColor="#ff00ff" text={title} />
+        </div>
+        <div className="overflow-hidden">
+          <MarqueeGlitchText direction={1} speed={12} opacity={0.08} glowColor="#00ff88" text={title} />
+        </div>
+      </div>
 
-      <div className="container mx-auto px-8 py-24 max-w-4xl">
-        {/* Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-6xl md:text-8xl font-black mb-4"
-          style={{ fontFamily: "'GT Pressura', sans-serif" }}
-        >
-          {t.title}
-        </motion.h1>
+      {/* Menu */}
+      <SimpleMenu items={menuItems} isExpanded={true} />
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-xl text-cyan-400 mb-12"
-          style={{ fontFamily: "'GT Pressura', sans-serif" }}
-        >
-          {t.subtitle}
-        </motion.p>
+      {/* Main content - no box */}
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div className="w-full max-w-2xl mx-auto text-center">
+          {/* Title */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-8"
+          >
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none">
+              <GlitchText text={title} />
+            </h1>
+            <p 
+              className="mt-4 text-xl tracking-widest uppercase"
+              style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff' }}
+            >
+              {subtitle}
+            </p>
+          </motion.div>
 
-        {/* Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-6 mb-12"
-        >
-          <p className="text-lg text-white/80 leading-relaxed">{t.intro}</p>
-          <p className="text-lg text-white/70 leading-relaxed">{t.description}</p>
-          <p className="text-lg text-white/70 leading-relaxed">{t.experience}</p>
-        </motion.div>
+          {/* Content - single block, tighter spacing */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-white/70 leading-relaxed text-xl md:text-2xl space-y-4"
+          >
+            <p>{content.intro}</p>
+            <p>{content.expertise}</p>
+            <p>{content.experience}</p>
+          </motion.div>
 
-        {/* Core Skills */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-12"
-        >
-          <h2 className="text-2xl font-bold mb-6 text-white" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
-            {t.skills}
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {coreSkills.map((skill, i) => (
-              <motion.span
-                key={skill}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 + i * 0.05 }}
-                className="px-4 py-2 border border-cyan-500/50 text-cyan-400 rounded-full text-sm"
-                style={{ fontFamily: "'GT Pressura', sans-serif" }}
+          {/* Download CV Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex justify-center mt-10"
+          >
+            <motion.button
+              onClick={handleDownloadCV}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="group flex items-center gap-3 px-8 py-4 rounded-xl border border-white/40 hover:border-white/70 transition-all duration-300"
+              style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff', backgroundColor: 'rgba(255,255,255,0.08)' }}
+            >
+              <Download size={22} className="group-hover:scale-110 transition-transform" />
+              <span className="text-lg tracking-widest uppercase font-bold">
+                {language === 'fr' ? 'Télécharger CV' : 'Download CV'}
+              </span>
+            </motion.button>
+          </motion.div>
+
+          {/* Social Links */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="flex justify-center gap-6 mt-12"
+          >
+            {socialLinks.map((social, index) => (
+              <motion.a
+                key={social.label}
+                href={social.href}
+                target={social.href.startsWith('mailto') ? undefined : '_blank'}
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + index * 0.1 }}
+                whileHover={{ scale: 1.1, y: -2 }}
+                className="p-3 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-cyan-400 hover:border-cyan-500/30 transition-all"
               >
-                {skill}
-              </motion.span>
+                <social.icon size={22} />
+              </motion.a>
             ))}
-          </div>
-        </motion.div>
-
-        {/* Social Links */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex gap-6"
-        >
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors">
-            <Github size={28} />
-          </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors">
-            <Linkedin size={28} />
-          </a>
-          <a href="mailto:contact@example.com" className="text-white/50 hover:text-white transition-colors">
-            <Mail size={28} />
-          </a>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

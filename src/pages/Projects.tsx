@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CustomCursor } from '../components/CustomCursor';
 import { SimpleMenu } from '../components/SimpleMenu';
 import { ArrowLeft, ChevronLeft, ChevronRight, Grid, X, ExternalLink, Github } from 'lucide-react';
+import { useMenuItems } from '../hooks/useMenuItems';
 
 // Glitch text component with custom colors
 const GlitchText = ({ text, color1, color2 }: { text: string; color1: string; color2: string }) => {
@@ -99,6 +100,7 @@ const projectsData = [
 
 export const Projects = () => {
   const navigate = useNavigate();
+  const { menuItems } = useMenuItems();
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [viewAll, setViewAll] = useState(false);
@@ -460,10 +462,7 @@ export const Projects = () => {
 
       {/* Bottom Menu */}
       <SimpleMenu 
-        items={[
-          { label: 'Projects', onClick: () => {} },
-          { label: 'Contact', onClick: () => navigate('/contact') },
-        ]} 
+        items={menuItems} 
         isExpanded={!viewAll} 
       />
     </div>

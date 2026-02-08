@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-type Section = 'home' | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'testimonials' | 'contact';
+type Section = 'home' | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'contact';
 
 interface UseScrollAnimationsProps {
   setCurrentSection: (section: Section) => void;

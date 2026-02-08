@@ -1,348 +1,909 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CustomCursor } from '../components/CustomCursor';
-import { DownloadCVButton } from '../components/DownloadCVButton';
-import { ArrowLeft, MessageSquarePlus, Send, X, Star } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import * as testimonialsService from '../services/testimonialsService';
+import { TiltedCard } from '../components/TiltedCard';
+import { SimpleMenu } from '../components/SimpleMenu';
+import { Send, Check, X, Trash2, Clock, Shield, MessageSquareQuote, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../services/authService';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import * as testimonialsService from '../services/testimonialsService';
+import type { Testimonial, TestimonialSubmission } from '../services/testimonialsService';
+import { useMenuItems } from '../hooks/useMenuItems';
+
+// Glitch text component
+const GlitchText = ({ text }: { text: string }) => {
+  const [glitchActive, setGlitchActive] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitchActive(true);
+      setTimeout(() => setGlitchActive(false), 200);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative inline-block">
+      <span
+        className="relative z-10 text-white"
+        style={{
+          fontFamily: "'GT Pressura', sans-serif",
+          textShadow: glitchActive
+            ? '2px 0 #ff00ff, -2px 0 #00ffff'
+            : '0 0 20px rgba(255, 255, 255, 0.5)',
+        }}
+      >
+        {text}
+      </span>
+      {glitchActive && (
+        <>
+          <span
+            className="absolute top-0 left-0 z-0"
+            style={{
+              fontFamily: "'GT Pressura', sans-serif",
+              color: '#00ffff',
+              clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)',
+              transform: 'translate(-4px, -2px)',
+              opacity: 0.8,
+            }}
+          >
+            {text}
+          </span>
+          <span
+            className="absolute top-0 left-0 z-0"
+            style={{
+              fontFamily: "'GT Pressura', sans-serif",
+              color: '#ff00ff',
+              clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)',
+              transform: 'translate(4px, 2px)',
+              opacity: 0.8,
+            }}
+          >
+            {text}
+          </span>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Marquee background text
+const MarqueeGlitchText = ({ direction = 1, speed = 20, opacity = 0.1, glowColor = '#00ffff' }: { direction?: number; speed?: number; opacity?: number; glowColor?: string }) => {
+  const [glitchActive, setGlitchActive] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitchActive(true);
+      setTimeout(() => setGlitchActive(false), 150);
+    }, 2000 + Math.random() * 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const text = 'TESTIMONIALS \u2022 TESTIMONIALS \u2022 TESTIMONIALS \u2022 TESTIMONIALS \u2022 TESTIMONIALS \u2022 ';
+
+  return (
+    <div
+      className="whitespace-nowrap"
+      style={{
+        animation: `marquee ${speed}s linear infinite`,
+        animationDirection: direction > 0 ? 'normal' : 'reverse',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "'GT Pressura', sans-serif",
+          fontSize: '8rem',
+          fontWeight: 900,
+          color: glitchActive ? glowColor : 'white',
+          opacity: glitchActive ? opacity * 3 : opacity,
+          textShadow: glitchActive
+            ? `0 0 30px ${glowColor}, 0 0 60px ${glowColor}`
+            : 'none',
+          transition: 'all 0.05s',
+        }}
+      >
+        {text}{text}
+      </span>
+    </div>
+  );
+};
+
+// Status badge - uses inline styles to guarantee visibility
+const StatusBadge = ({ status }: { status: string }) => {
+  const config: Record<string, { icon: typeof Clock; label: string; textColor: string; bgColor: string; borderColor: string }> = {
+    pending: { icon: Clock, label: 'Pending', textColor: '#facc15', bgColor: 'rgba(250,204,21,0.12)', borderColor: 'rgba(250,204,21,0.4)' },
+    approved: { icon: Check, label: 'Approved', textColor: '#4ade80', bgColor: 'rgba(74,222,128,0.12)', borderColor: 'rgba(74,222,128,0.4)' },
+    rejected: { icon: X, label: 'Rejected', textColor: '#f87171', bgColor: 'rgba(248,113,113,0.12)', borderColor: 'rgba(248,113,113,0.4)' },
+  };
+  const c = config[status] || { icon: Clock, label: status, textColor: '#ffffff', bgColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' };
+  const Icon = c.icon;
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs tracking-wider uppercase"
+      style={{
+        fontFamily: "'GT Pressura', sans-serif",
+        color: c.textColor,
+        backgroundColor: c.bgColor,
+        border: `1px solid ${c.borderColor}`,
+      }}
+    >
+      <Icon size={12} />
+      {c.label}
+    </span>
+  );
+};
+
+const ITEMS_PER_PAGE = 4;
 
 export const Testimonials = () => {
   const navigate = useNavigate();
-  const { language } = useLanguage();
-  const [testimonials, setTestimonials] = useState<testimonialsService.Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { menuItems } = useMenuItems();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState<'public' | 'admin'>('public');
+
+  // Public testimonials
+  const [approvedTestimonials, setApprovedTestimonials] = useState<Testimonial[]>([]);
+  const [loadingPublic, setLoadingPublic] = useState(true);
+  const [publicPage, setPublicPage] = useState(0);
+
+  // Admin testimonials
+  const [allTestimonials, setAllTestimonials] = useState<Testimonial[]>([]);
+  const [adminFilter, setAdminFilter] = useState<string>('pending');
+  const [loadingAdmin, setLoadingAdmin] = useState(false);
+  const [adminPage, setAdminPage] = useState(0);
+
+  // Submission form
   const [showForm, setShowForm] = useState(false);
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [formData, setFormData] = useState<TestimonialSubmission>({
+    author_name: '',
+    author_email: 'visitor@testimonial.com',
+    testimonial_text_en: '',
+    rating: 5,
+  });
   const [submitting, setSubmitting] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
-  const [newRating, setNewRating] = useState(5);
-  const boardRef = useRef<HTMLDivElement>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  // Check auth status
+  // Action loading states
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [adminError, setAdminError] = useState('');
+
+  const syncToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      localStorage.setItem('token', session.access_token);
+      return true;
+    }
+    return false;
+  };
+
+  // Check admin status
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        setUser({ email: session.user.email });
+      const loggedIn = !!session?.user;
+      if (loggedIn && session.access_token) {
+        localStorage.setItem('token', session.access_token);
       }
+      setIsAdmin(loggedIn);
     };
-    checkAuth();
+    checkAdmin();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      if (session?.user?.email) {
-        setUser({ email: session.user.email });
-      } else {
-        setUser(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const loggedIn = !!session?.user;
+      if (loggedIn && session?.access_token) {
+        localStorage.setItem('token', session.access_token);
       }
+      setIsAdmin(loggedIn);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch testimonials
+  // Load approved testimonials
   useEffect(() => {
-    const fetchData = async () => {
+    const loadApproved = async () => {
       try {
+        setLoadingPublic(true);
         const data = await testimonialsService.getApprovedTestimonials();
-        setTestimonials(data);
-      } catch (error) {
-        console.error('Error fetching testimonials:', error);
+        setApprovedTestimonials(data);
+      } catch {
+        console.error('Failed to load testimonials');
       } finally {
-        setLoading(false);
+        setLoadingPublic(false);
       }
     };
-    fetchData();
+    loadApproved();
   }, []);
 
-  const title = language === 'fr' ? 'TÉMOIGNAGES' : 'TESTIMONIALS';
+  // Load admin testimonials
+  useEffect(() => {
+    if (isAdmin) {
+      loadAdminTestimonials();
+    }
+  }, [isAdmin, adminFilter]);
 
-  const handleSubmit = async () => {
-    if (!user || !newMessage.trim()) return;
-
-    setSubmitting(true);
+  const loadAdminTestimonials = async () => {
     try {
-      await testimonialsService.submitTestimonial({
-        author_name: user.email.split('@')[0],
-        author_email: user.email,
-        testimonial_text_en: newMessage,
-        rating: newRating,
-      });
+      setLoadingAdmin(true);
+      setAdminError('');
+      await syncToken();
+      const data = await testimonialsService.getAllTestimonialsAdmin(adminFilter || undefined);
+      setAllTestimonials(data);
+      setAdminPage(0);
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || err.message || 'Unknown error';
+      console.error('Failed to load admin testimonials:', detail, err);
+      setAdminError(`Failed to load testimonials: ${detail}`);
+    } finally {
+      setLoadingAdmin(false);
+    }
+  };
 
-      setNewMessage('');
-      setNewRating(5);
-      setShowForm(false);
-      alert(language === 'fr' 
-        ? 'Merci! Votre témoignage sera visible après approbation.' 
-        : 'Thanks! Your testimonial will be visible after approval.');
-    } catch (error) {
-      console.error('Error submitting testimonial:', error);
-      alert(language === 'fr' ? 'Erreur lors de l\'envoi' : 'Error submitting');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError('');
+
+    if (!formData.testimonial_text_en.trim()) {
+      setSubmitError('Please enter a testimonial.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await testimonialsService.submitTestimonial(formData);
+      setSubmitSuccess(true);
+      setFormData({ ...formData, author_name: '', testimonial_text_en: '' });
+    } catch (err: any) {
+      setSubmitError(err.response?.data?.detail || 'Failed to submit testimonial. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Generate random positions for neon game effect
-  const getRandomPosition = (index: number) => {
-    const seed = index * 137.508; // Golden angle
-    const x = (Math.sin(seed) * 0.35 + 0.5) * 100;
-    const y = (Math.cos(seed * 0.7) * 0.35 + 0.5) * 100;
-    const rotation = Math.sin(seed) * 3;
-    return { x: `${x}%`, y: `${y}%`, rotation };
+  const handleApprove = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await syncToken();
+      await testimonialsService.approveTestimonial(id);
+      await loadAdminTestimonials();
+      const data = await testimonialsService.getApprovedTestimonials();
+      setApprovedTestimonials(data);
+    } catch {
+      console.error('Failed to approve');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const neonColors = [
-    'from-cyan-500 to-blue-500',
-    'from-pink-500 to-purple-500',
-    'from-green-500 to-emerald-500',
-    'from-yellow-500 to-orange-500',
-    'from-violet-500 to-indigo-500',
-  ];
+  const handleReject = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await syncToken();
+      await testimonialsService.rejectTestimonial(id);
+      await loadAdminTestimonials();
+      const data = await testimonialsService.getApprovedTestimonials();
+      setApprovedTestimonials(data);
+    } catch {
+      console.error('Failed to reject');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this testimonial?')) return;
+    setActionLoading(id);
+    try {
+      await syncToken();
+      await testimonialsService.deleteTestimonial(id);
+      await loadAdminTestimonials();
+      const data = await testimonialsService.getApprovedTestimonials();
+      setApprovedTestimonials(data);
+    } catch {
+      console.error('Failed to delete');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Pagination helpers
+  const publicTotalPages = Math.max(1, Math.ceil(approvedTestimonials.length / ITEMS_PER_PAGE));
+  const publicItems = approvedTestimonials.slice(publicPage * ITEMS_PER_PAGE, (publicPage + 1) * ITEMS_PER_PAGE);
+
+  const adminTotalPages = Math.max(1, Math.ceil(allTestimonials.length / ITEMS_PER_PAGE));
+  const adminItems = allTestimonials.slice(adminPage * ITEMS_PER_PAGE, (adminPage + 1) * ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen bg-black text-white crt-effect overflow-hidden">
+    <>
+    <div className="h-screen bg-black relative overflow-hidden crt-effect">
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
       <div className="scanline" />
       <CustomCursor />
+      <TiltedCard />
 
-      {/* Neon grid background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
-            linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px'
-        }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/5 to-cyan-900/5" />
+      {/* Marquee background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none flex flex-col justify-center gap-4">
+        <div className="overflow-hidden">
+          <MarqueeGlitchText direction={1} speed={12} opacity={0.12} glowColor="#00ffff" />
+        </div>
+        <div className="overflow-hidden">
+          <MarqueeGlitchText direction={-1} speed={15} opacity={0.08} glowColor="#ff00ff" />
+        </div>
+        <div className="overflow-hidden">
+          <MarqueeGlitchText direction={1} speed={10} opacity={0.1} glowColor="#ff3333" />
+        </div>
       </div>
 
-      {/* Back button */}
-      <motion.button
-        onClick={() => navigate('/')}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        whileHover={{ x: -5 }}
-        className="fixed top-8 left-8 flex items-center gap-2 text-white/50 hover:text-white transition-colors z-50"
-        style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
-      >
-        <ArrowLeft size={18} />
-        <span className="text-sm tracking-widest">HOME</span>
-      </motion.button>
+      {/* Menu */}
+      <SimpleMenu items={menuItems} isExpanded={true} />
 
-      {/* Download CV button */}
-      <div className="fixed top-8 right-8 z-50">
-        <DownloadCVButton />
-      </div>
-
-      {/* Drop Message Button - Fixed position */}
-      <motion.button
-        onClick={() => user ? setShowForm(true) : navigate('/login')}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-bold shadow-lg shadow-cyan-500/30"
-        style={{ fontFamily: "'GT Pressura', sans-serif" }}
-      >
-        <MessageSquarePlus size={20} />
-        <span>{language === 'fr' ? 'DÉPOSER UN MESSAGE' : 'DROP A MESSAGE'}</span>
-      </motion.button>
-
-      {/* Title */}
-      <div className="container mx-auto px-8 pt-24 pb-8">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-6xl md:text-8xl font-black text-center mb-4"
-          style={{ 
-            fontFamily: "'GT Pressura', sans-serif",
-            textShadow: '0 0 40px rgba(0,255,255,0.5), 0 0 80px rgba(255,0,255,0.3)'
-          }}
+      {/* Main content - fixed viewport, no scroll, vertically centered */}
+      <div className="relative z-10 h-screen flex flex-col items-center justify-center px-8">
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6 text-center flex-shrink-0"
         >
-          {title}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-center text-white/50"
-        >
-          {user 
-            ? (language === 'fr' ? `Connecté en tant que ${user.email}` : `Logged in as ${user.email}`)
-            : (language === 'fr' ? 'Connectez-vous pour laisser un message' : 'Sign in to leave a message')}
-        </motion.p>
-      </div>
-
-      {/* Testimonials Board - Neon Game Style */}
-      <div 
-        ref={boardRef}
-        className="relative min-h-[70vh] mx-8 rounded-3xl border border-white/10 overflow-hidden"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(20,20,40,0.8) 0%, rgba(0,0,0,0.95) 100%)'
-        }}
-      >
-        {loading ? (
-          <div className="flex items-center justify-center h-96 text-white/50">
-            {language === 'fr' ? 'Chargement...' : 'Loading...'}
-          </div>
-        ) : testimonials.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-96 text-white/50">
-            <MessageSquarePlus size={48} className="mb-4 opacity-50" />
-            <p>{language === 'fr' ? 'Soyez le premier à laisser un témoignage!' : 'Be the first to leave a testimonial!'}</p>
-          </div>
-        ) : (
-          <div className="relative w-full h-[70vh] p-8">
-            {testimonials.map((testimonial, i) => {
-              const pos = getRandomPosition(i);
-              const colorClass = neonColors[i % neonColors.length];
-
-              return (
-                <motion.div
-                  key={testimonial.id}
-                  initial={{ opacity: 0, scale: 0, rotate: pos.rotation }}
-                  animate={{ opacity: 1, scale: 1, rotate: pos.rotation }}
-                  transition={{ delay: 0.1 + i * 0.08, type: 'spring', stiffness: 200 }}
-                  whileHover={{ scale: 1.1, rotate: 0, zIndex: 100 }}
-                  className="absolute cursor-pointer"
-                  style={{
-                    left: pos.x,
-                    top: pos.y,
-                    transform: `translate(-50%, -50%) rotate(${pos.rotation}deg)`,
-                  }}
-                >
-                  <div 
-                    className={`relative p-4 rounded-xl border-2 max-w-xs backdrop-blur-sm`}
-                    style={{
-                      borderImage: `linear-gradient(135deg, ${colorClass.includes('cyan') ? '#00ffff' : colorClass.includes('pink') ? '#ff00ff' : colorClass.includes('green') ? '#00ff00' : colorClass.includes('yellow') ? '#ffff00' : '#8b5cf6'}, transparent) 1`,
-                      boxShadow: `0 0 20px rgba(${colorClass.includes('cyan') ? '0,255,255' : colorClass.includes('pink') ? '255,0,255' : colorClass.includes('green') ? '0,255,0' : colorClass.includes('yellow') ? '255,255,0' : '139,92,246'},0.3)`,
-                      background: 'rgba(0,0,0,0.7)',
-                    }}
-                  >
-                    {/* Rating stars */}
-                    <div className="flex gap-1 mb-2">
-                      {[...Array(5)].map((_, j) => (
-                        <Star 
-                          key={j} 
-                          size={12} 
-                          className={j < (testimonial.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'}
-                        />
-                      ))}
-                    </div>
-
-                    <p className="text-sm text-white/90 mb-3 line-clamp-3">
-                      "{language === 'fr' && testimonial.testimonial_text_fr ? testimonial.testimonial_text_fr : testimonial.testimonial_text_en}"
-                    </p>
-
-                    <div className="text-xs text-white/50">
-                      — {testimonial.author_name}
-                      {testimonial.author_email && (
-                        <span className="block text-[10px] opacity-70">{testimonial.author_email}</span>
-                      )}
-                    </div>
-
-                    {/* Neon corner decorations */}
-                    <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-cyan-500" />
-                    <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-purple-500" />
-                    <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-purple-500" />
-                    <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-cyan-500" />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Submit Form Modal */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            onClick={() => setShowForm(false)}
+          <h1
+            className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none"
+            style={{ fontFamily: "'GT Pressura', sans-serif" }}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md mx-4 p-8 rounded-2xl border border-cyan-500/50 bg-black/90"
+            <GlitchText text="TESTIMONIALS" />
+          </h1>
+          <p
+            className="mt-2 text-sm tracking-widest uppercase"
+            style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
+          >
+            What people say
+          </p>
+        </motion.div>
+
+        {/* Admin tab toggle */}
+        {isAdmin && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex gap-2 mb-4 flex-shrink-0"
+          >
+            <button
+              onClick={() => setActiveTab('public')}
+              className={`px-4 py-1.5 rounded-lg text-xs tracking-wider uppercase transition-all border ${
+                activeTab === 'public'
+                  ? 'bg-white/10 border-white/30 text-white'
+                  : 'bg-transparent border-white/10 text-white/60 hover:text-white hover:border-white/20'
+              }`}
+              style={{ fontFamily: "'GT Pressura', sans-serif" }}
+            >
+              Public View
+            </button>
+            <button
+              onClick={() => setActiveTab('admin')}
+              className="px-4 py-1.5 rounded-lg text-xs tracking-wider uppercase transition-all border flex items-center gap-2"
               style={{
-                boxShadow: '0 0 50px rgba(0,255,255,0.3), 0 0 100px rgba(255,0,255,0.2)'
+                fontFamily: "'GT Pressura', sans-serif",
+                backgroundColor: activeTab === 'admin' ? 'rgba(0,255,255,0.1)' : 'transparent',
+                borderColor: activeTab === 'admin' ? 'rgba(0,255,255,0.3)' : 'rgba(255,255,255,0.1)',
+                color: activeTab === 'admin' ? '#22d3ee' : 'rgba(255,255,255,0.6)',
               }}
             >
-              <button
-                onClick={() => setShowForm(false)}
-                className="absolute top-4 right-4 text-white/50 hover:text-white"
-              >
-                <X size={24} />
-              </button>
-
-              <h2 
-                className="text-2xl font-bold mb-6"
-                style={{ fontFamily: "'GT Pressura', sans-serif" }}
-              >
-                {language === 'fr' ? 'Laisser un témoignage' : 'Leave a Testimonial'}
-              </h2>
-
-              <div className="mb-6">
-                <label className="block text-sm text-white/50 mb-2">
-                  {language === 'fr' ? 'Note' : 'Rating'}
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setNewRating(star)}
-                      className="transition-transform hover:scale-110"
-                    >
-                      <Star 
-                        size={28} 
-                        className={star <= newRating ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm text-white/50 mb-2">
-                  {language === 'fr' ? 'Votre message' : 'Your message'}
-                </label>
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={language === 'fr' ? 'Partagez votre expérience...' : 'Share your experience...'}
-                  className="w-full h-32 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none resize-none"
-                />
-              </div>
-
-              <div className="text-sm text-white/50 mb-6">
-                {language === 'fr' 
-                  ? `Sera publié avec: ${user?.email}` 
-                  : `Will be posted as: ${user?.email}`}
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={submitting || !newMessage.trim()}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyan-500/30 transition-all"
-                style={{ fontFamily: "'GT Pressura', sans-serif" }}
-              >
-                <Send size={18} />
-                {submitting 
-                  ? (language === 'fr' ? 'Envoi...' : 'Sending...') 
-                  : (language === 'fr' ? 'ENVOYER' : 'SEND')}
-              </button>
-            </motion.div>
+              <Shield size={14} />
+              Admin Panel
+            </button>
           </motion.div>
         )}
-      </AnimatePresence>
+
+        {/* ==================== PUBLIC VIEW ==================== */}
+        {activeTab === 'public' && (
+          <div className="w-full max-w-5xl flex flex-col">
+            {loadingPublic ? (
+              <div className="flex-1 flex justify-center items-center">
+                <div className="w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full animate-spin" />
+              </div>
+            ) : approvedTestimonials.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <MessageSquareQuote size={48} className="mb-4" style={{ color: 'rgba(255,255,255,0.6)' }} />
+                <p className="text-lg mb-8" style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}>
+                  No testimonials yet. Be the first to share your experience!
+                </p>
+                {!showForm && !submitSuccess && (
+                  <motion.button
+                    onClick={() => setShowForm(true)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-8 py-3 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-3"
+                    style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
+                  >
+                    <MessageSquareQuote size={18} />
+                    <span className="text-sm uppercase tracking-widest">Write a Testimonial</span>
+                  </motion.button>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Cards with arrows */}
+                <div className="flex items-center gap-4">
+                  {/* Left Arrow */}
+                  {publicTotalPages > 1 && (
+                    <motion.button
+                      onClick={() => setPublicPage((prev) => (prev - 1 + publicTotalPages) % publicTotalPages)}
+                      whileHover={{ scale: 1.1, x: -3 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all"
+                      style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
+                    >
+                      <ChevronLeft size={28} />
+                    </motion.button>
+                  )}
+
+                  {/* Testimonials grid */}
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
+                    <AnimatePresence mode="wait">
+                      {publicItems.map((t) => (
+                        <motion.div
+                          key={t.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3 }}
+                          className="group relative bg-black/60 backdrop-blur-xl rounded-lg p-6 border border-white/10 hover:border-white/20 transition-all duration-500"
+                          style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}
+                        >
+                          <div className="absolute top-3 right-4 group-hover:text-cyan-500/25 transition-colors duration-500" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                            <MessageSquareQuote size={32} />
+                          </div>
+                          <p
+                            className="text-white text-sm leading-relaxed mb-4 relative z-10"
+                            style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                          >
+                            &quot;{t.testimonial_text_en}&quot;
+                          </p>
+                          <div className="pt-3 border-t border-white/10">
+                            <p
+                              className="text-white text-xs font-medium tracking-wider uppercase"
+                              style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                            >
+                              &#x2014; {t.author_name}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Right Arrow */}
+                  {publicTotalPages > 1 && (
+                    <motion.button
+                      onClick={() => setPublicPage((prev) => (prev + 1) % publicTotalPages)}
+                      whileHover={{ scale: 1.1, x: 3 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all"
+                      style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
+                    >
+                      <ChevronRight size={28} />
+                    </motion.button>
+                  )}
+                </div>
+
+                {/* Page indicator */}
+                {publicTotalPages > 1 && (
+                  <div className="flex justify-center gap-2 mt-4 flex-shrink-0">
+                    {Array.from({ length: publicTotalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setPublicPage(i)}
+                        className="rounded-full transition-all"
+                        style={{
+                          width: i === publicPage ? '1.5rem' : '0.5rem',
+                          height: '0.5rem',
+                          backgroundColor: i === publicPage ? '#22d3ee' : 'rgba(255,255,255,0.2)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Write a Testimonial button */}
+                <div className="flex justify-center mt-3 flex-shrink-0">
+                  {!showForm && !submitSuccess && (
+                    <motion.button
+                      onClick={() => setShowForm(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="px-6 py-2 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-3"
+                      style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
+                    >
+                      <MessageSquareQuote size={16} />
+                      <span className="text-xs uppercase tracking-widest">Write a Testimonial</span>
+                    </motion.button>
+                  )}
+                </div>
+              </>
+            )}
+
+          </div>
+        )}
+
+        {/* ==================== ADMIN PANEL ==================== */}
+        {activeTab === 'admin' && isAdmin && (
+          <div className="w-full max-w-5xl flex flex-col">
+            {/* Filter buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-wrap gap-2 mb-4 justify-center flex-shrink-0"
+            >
+              {[
+                { value: '', label: 'All' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'rejected', label: 'Rejected' },
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => setAdminFilter(filter.value)}
+                  className={`px-4 py-1.5 rounded-lg text-xs tracking-wider uppercase transition-all border ${
+                    adminFilter === filter.value
+                      ? 'bg-white/10 border-white/30 text-white'
+                      : 'bg-transparent border-white/10 text-white/60 hover:text-white'
+                  }`}
+                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </motion.div>
+
+            {adminError && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mb-4 p-4 rounded-lg text-center flex-shrink-0"
+                style={{ border: '1px solid rgba(248,113,113,0.3)', backgroundColor: 'rgba(248,113,113,0.1)' }}
+              >
+                <p className="text-white text-sm mb-3" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
+                  {adminError}
+                </p>
+                <button
+                  onClick={() => loadAdminTestimonials()}
+                  className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white hover:bg-white/10 text-xs tracking-wider uppercase transition-all"
+                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                >
+                  Retry
+                </button>
+              </motion.div>
+            )}
+
+            {loadingAdmin ? (
+              <div className="flex-1 flex justify-center items-center">
+                <div className="w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full animate-spin" />
+              </div>
+            ) : allTestimonials.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <MessageSquareQuote size={48} className="mb-4" style={{ color: 'rgba(255,255,255,0.7)' }} />
+                <p className="text-white text-lg" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
+                  No testimonials found{adminFilter ? ` with status "${adminFilter}"` : ''}.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Admin cards with arrows */}
+                <div className="flex items-center gap-4">
+                  {/* Left Arrow */}
+                  {adminTotalPages > 1 && (
+                    <motion.button
+                      onClick={() => setAdminPage((prev) => (prev - 1 + adminTotalPages) % adminTotalPages)}
+                      whileHover={{ scale: 1.1, x: -3 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all"
+                      style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
+                    >
+                      <ChevronLeft size={28} />
+                    </motion.button>
+                  )}
+
+                  {/* Testimonials list */}
+                  <div className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      {adminItems.map((t) => (
+                        <motion.div
+                          key={t.id}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.2 }}
+                          className="bg-black/60 backdrop-blur-xl rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all"
+                        >
+                          <div className="flex items-center gap-4">
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                <StatusBadge status={t.status} />
+                                <span
+                                  className="text-xs"
+                                  style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.6)' }}
+                                >
+                                  {new Date(t.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+
+                              <p
+                                className="text-white text-sm leading-relaxed mb-2 line-clamp-2"
+                                style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                              >
+                                &quot;{t.testimonial_text_en}&quot;
+                              </p>
+
+                              <div className="flex items-center gap-2">
+                                <User size={12} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                                <p
+                                  className="text-xs"
+                                  style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.8)' }}
+                                >
+                                  {t.author_name}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Action buttons - all use inline styles for guaranteed visibility */}
+                            <div className="flex gap-2 flex-shrink-0">
+                              {t.status !== 'approved' && (
+                                <button
+                                  onClick={() => handleApprove(t.id)}
+                                  disabled={actionLoading === t.id}
+                                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
+                                  style={{
+                                    fontFamily: "'GT Pressura', sans-serif",
+                                    color: '#4ade80',
+                                    backgroundColor: 'rgba(74,222,128,0.1)',
+                                    border: '1px solid rgba(74,222,128,0.3)',
+                                  }}
+                                  title="Approve"
+                                >
+                                  <Check size={14} />
+                                  <span>Approve</span>
+                                </button>
+                              )}
+                              {t.status !== 'rejected' && (
+                                <button
+                                  onClick={() => handleReject(t.id)}
+                                  disabled={actionLoading === t.id}
+                                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
+                                  style={{
+                                    fontFamily: "'GT Pressura', sans-serif",
+                                    color: '#facc15',
+                                    backgroundColor: 'rgba(250,204,21,0.1)',
+                                    border: '1px solid rgba(250,204,21,0.3)',
+                                  }}
+                                  title="Reject"
+                                >
+                                  <X size={14} />
+                                  <span>Reject</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDelete(t.id)}
+                                disabled={actionLoading === t.id}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
+                                style={{
+                                  fontFamily: "'GT Pressura', sans-serif",
+                                  color: '#f87171',
+                                  backgroundColor: 'rgba(248,113,113,0.1)',
+                                  border: '1px solid rgba(248,113,113,0.3)',
+                                }}
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Right Arrow */}
+                  {adminTotalPages > 1 && (
+                    <motion.button
+                      onClick={() => setAdminPage((prev) => (prev + 1) % adminTotalPages)}
+                      whileHover={{ scale: 1.1, x: 3 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all"
+                      style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
+                    >
+                      <ChevronRight size={28} />
+                    </motion.button>
+                  )}
+                </div>
+
+                {/* Page indicator */}
+                {adminTotalPages > 1 && (
+                  <div className="flex justify-center gap-2 mt-3 flex-shrink-0">
+                    {Array.from({ length: adminTotalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setAdminPage(i)}
+                        className="rounded-full transition-all"
+                        style={{
+                          width: i === adminPage ? '1.5rem' : '0.5rem',
+                          height: '0.5rem',
+                          backgroundColor: i === adminPage ? '#22d3ee' : 'rgba(255,255,255,0.2)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Count */}
+                <div className="text-center mt-2 flex-shrink-0">
+                  <span className="text-xs tracking-widest" style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.6)' }}>
+                    {adminPage * ITEMS_PER_PAGE + 1} &#x2013; {Math.min((adminPage + 1) * ITEMS_PER_PAGE, allTestimonials.length)} of {allTestimonials.length}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
     </div>
+
+      {/* Portaled modals - rendered outside the crt-effect container to avoid transform breaking fixed positioning */}
+      {createPortal(
+        <>
+          <AnimatePresence>
+            {showForm && !submitSuccess && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="modal-cursor"
+                style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.88)', cursor: 'default !important' } as React.CSSProperties}
+                onClick={(e: React.MouseEvent) => { if (e.target === e.currentTarget) { setShowForm(false); setSubmitError(''); } }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  style={{ position: 'relative', maxWidth: '42rem', width: '100%', margin: '0 1.5rem', borderRadius: '0.5rem', padding: '3rem 4rem', backgroundColor: 'rgba(10,10,10,0.98)', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9)', cursor: 'default !important' } as React.CSSProperties}
+                >
+                  {/* Close X button */}
+                  <button
+                    type="button"
+                    onClick={() => { setShowForm(false); setSubmitError(''); }}
+                    style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer !important', padding: '0.5rem', lineHeight: 1 } as React.CSSProperties}
+                  >
+                    <X size={22} />
+                  </button>
+
+                  <h3 className="text-white text-xl mb-8 tracking-widest uppercase text-center" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
+                    Write a Testimonial
+                  </h3>
+
+                  {submitError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-6 p-3 rounded-lg text-sm text-center"
+                      style={{ fontFamily: "'GT Pressura', sans-serif", color: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.5)' }}
+                    >
+                      {submitError}
+                    </motion.div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                      <label
+                        className="block text-xs mb-2 tracking-[0.2em] uppercase"
+                        style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
+                      >
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.author_name}
+                        onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
+                        required
+                        className="w-full px-5 py-4 rounded-lg text-base focus:outline-none transition-all"
+                        style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', cursor: 'text' }}
+                        placeholder="Your name"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        className="block text-xs mb-2 tracking-[0.2em] uppercase"
+                        style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
+                      >
+                        Your Message *
+                      </label>
+                      <textarea
+                        value={formData.testimonial_text_en}
+                        onChange={(e) => setFormData({ ...formData, testimonial_text_en: e.target.value })}
+                        required
+                        rows={6}
+                        className="w-full px-5 py-4 rounded-lg text-base focus:outline-none transition-all resize-none"
+                        style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', cursor: 'text' }}
+                        placeholder="Your message"
+                      />
+                    </div>
+
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full py-4 font-bold tracking-[0.2em] uppercase text-sm rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        style={{ fontFamily: "'GT Pressura', sans-serif", backgroundColor: '#ffffff', color: '#000000', cursor: 'pointer !important' } as React.CSSProperties}
+                      >
+                        <span>{submitting ? 'Submitting...' : 'Submit Testimonial'}</span>
+                        {!submitting && <Send size={16} />}
+                      </button>
+                    </div>
+
+                    <p
+                      className="text-xs text-center"
+                      style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.6)' }}
+                    >
+                      Your testimonial will be reviewed before being published.
+                    </p>
+                  </form>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {submitSuccess && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="modal-cursor"
+                style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.88)', cursor: 'default !important' } as React.CSSProperties}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  style={{ maxWidth: '28rem', margin: '0 1rem', borderRadius: '0.5rem', padding: '2rem', backgroundColor: 'rgba(10,10,10,0.98)', border: '1px solid rgba(255,255,255,0.15)', textAlign: 'center', cursor: 'default !important' } as React.CSSProperties}
+                >
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(74,222,128,0.2)', border: '1px solid rgba(74,222,128,0.5)' }}>
+                    <Check size={28} style={{ color: '#4ade80' }} />
+                  </div>
+                  <h3
+                    className="text-xl text-white mb-2"
+                    style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                  >
+                    Thank You!
+                  </h3>
+                  <p
+                    className="text-sm mb-6"
+                    style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
+                  >
+                    Your testimonial has been submitted and is awaiting review.
+                  </p>
+                  <button
+                    onClick={() => { setSubmitSuccess(false); setShowForm(false); }}
+                    className="text-sm tracking-wider uppercase transition-colors"
+                    style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)', cursor: 'pointer !important' } as React.CSSProperties}
+                  >
+                    Done
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>,
+        document.body
+      )}
+    </>
   );
 };
