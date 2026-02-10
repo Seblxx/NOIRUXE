@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { CustomCursor } from '../components/CustomCursor';
 import { SimpleMenu } from '../components/SimpleMenu';
 import { ArrowLeft, ChevronLeft, ChevronRight, Grid, X, ExternalLink, Github } from 'lucide-react';
 import { useMenuItems } from '../hooks/useMenuItems';
@@ -77,7 +76,7 @@ const projectsData = [
       '/Media/TWIN picture III IV.jpg',
     ],
     technologies: ['Python', 'JavaScript', 'HTML/CSS'],
-    projectUrl: '',
+    projectUrl: 'https://twin-hz5k.onrender.com/',
     githubUrl: '',
     glitchColors: { color1: '#ff00ff', color2: '#00bfff' }, // pink and blue
   },
@@ -92,7 +91,7 @@ const projectsData = [
       '/Media/VLADTECH picture III.jpg',
     ],
     technologies: ['React', 'TypeScript', 'Java', 'Spring Boot', 'Docker'],
-    projectUrl: '',
+    projectUrl: 'https://vladtech-inc-fudvj.ondigitalocean.app/',
     githubUrl: '',
     glitchColors: { color1: '#ffff00', color2: '#ffffff' }, // yellow and white
   },
@@ -107,6 +106,16 @@ export const Projects = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  // Custom cursor tracking for Projects page
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const currentProject = projectsData[currentProjectIndex];
 
@@ -156,9 +165,19 @@ export const Projects = () => {
   };
 
   return (
+    <>
+    <div
+      className="fixed w-2 h-2 bg-white rounded-full pointer-events-none"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'translate(-50%, -50%)',
+        zIndex: 99999,
+        boxShadow: '0 0 6px 2px rgba(255,255,255,0.5)',
+      }}
+    />
     <div className="min-h-screen h-screen bg-black relative overflow-hidden crt-effect">
       <div className="scanline" />
-      <CustomCursor />
 
       {/* Video Background */}
       <AnimatePresence mode="wait">
@@ -460,11 +479,30 @@ export const Projects = () => {
         )}
       </AnimatePresence>
 
+      {/* Visit button - positioned at bottom right */}
+      {!viewAll && currentProject.projectUrl && (
+        <motion.a
+          href={currentProject.projectUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          whileHover={{ scale: 1.05 }}
+          className="fixed bottom-8 right-8 flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all z-50"
+          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.1em' }}
+        >
+          <ExternalLink size={18} />
+          <span className="text-sm tracking-wider">VISIT</span>
+        </motion.a>
+      )}
+
       {/* Bottom Menu */}
       <SimpleMenu 
         items={menuItems} 
         isExpanded={!viewAll} 
       />
     </div>
+    </>
   );
 };

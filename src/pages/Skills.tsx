@@ -292,7 +292,8 @@ export const Skills = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col"
+            className="flex flex-col rounded-2xl p-6"
+            style={{ backgroundColor: '#00cccc', boxShadow: '0 0 50px rgba(0, 255, 255, 0.3)' }}
           >
             {/* Title */}
             <div className="text-center mb-4">
@@ -304,7 +305,7 @@ export const Skills = () => {
               </h2>
               {categories.length > 0 && (
                 <div 
-                  className="text-white/30 text-xs tracking-widest mt-1"
+                  className="text-white/70 text-xs tracking-widest mt-1"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
                   {String(currentSkillCatIndex + 1).padStart(2, '0')} / {String(categories.length).padStart(2, '0')}
@@ -324,7 +325,7 @@ export const Skills = () => {
                   onClick={prevSkillCat}
                   whileHover={{ scale: 1.1, x: -3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-cyan-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-cyan-400 hover:bg-cyan-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronLeft size={28} />
                 </motion.button>
@@ -337,10 +338,9 @@ export const Skills = () => {
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.3 }}
                   ref={skillsContainerRef}
-                  className="flex-1 p-5 rounded-xl border bg-black/70 backdrop-blur-md min-h-[200px]"
+                  className="flex-1 p-5 rounded-xl border border-white/20 min-h-[200px]"
                   style={{ 
-                    borderColor: (categoryColors[categories[currentSkillCatIndex]?.[0]] || '#ffffff') + '50',
-                    boxShadow: `0 0 40px ${(categoryColors[categories[currentSkillCatIndex]?.[0]] || '#ffffff')}15`
+                    backgroundColor: 'rgba(255,255,255,0.12)',
                   }}
                 >
                   {categories[currentSkillCatIndex] && (
@@ -349,7 +349,7 @@ export const Skills = () => {
                         className="text-sm font-bold mb-3 tracking-widest uppercase"
                         style={{ 
                           fontFamily: "'GT Pressura', sans-serif",
-                          color: categoryColors[categories[currentSkillCatIndex][0]] || '#00ffff'
+                          color: '#ffffff'
                         }}
                       >
                         {categories[currentSkillCatIndex][0]}
@@ -362,9 +362,9 @@ export const Skills = () => {
                           >
                             <div 
                               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: categoryColors[categories[currentSkillCatIndex][0]] || '#00ffff' }}
+                              style={{ backgroundColor: '#ffffff' }}
                             />
-                            <span className="text-white/90 text-sm">
+                            <span className="text-white text-sm font-medium">
                               {language === 'fr' ? skill.name_fr : skill.name_en}
                             </span>
                           </div>
@@ -379,7 +379,7 @@ export const Skills = () => {
                   onClick={nextSkillCat}
                   whileHover={{ scale: 1.1, x: 3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-cyan-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-cyan-400 hover:bg-cyan-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronRight size={28} />
                 </motion.button>
@@ -392,7 +392,8 @@ export const Skills = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex flex-col"
+            className="flex flex-col rounded-2xl p-6"
+            style={{ backgroundColor: '#16a34a', boxShadow: '0 0 50px rgba(34, 197, 94, 0.3)' }}
           >
             {/* Title */}
             <div className="text-center mb-4">
@@ -404,7 +405,7 @@ export const Skills = () => {
               </h2>
               {experiences.length > 0 && (
                 <div 
-                  className="text-white/30 text-xs tracking-widest mt-1"
+                  className="text-white/70 text-xs tracking-widest mt-1"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
                   {String(currentExpIndex + 1).padStart(2, '0')} / {String(experiences.length).padStart(2, '0')}
@@ -428,7 +429,7 @@ export const Skills = () => {
                   onClick={prevExp}
                   whileHover={{ scale: 1.1, x: -3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-green-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-green-400 hover:bg-green-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronLeft size={28} />
                 </motion.button>
@@ -440,12 +441,9 @@ export const Skills = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.3 }}
-                  className="flex-1 p-5 rounded-xl border border-green-500/30 bg-black/70 backdrop-blur-md relative overflow-hidden min-h-[200px]"
-                  style={{
-                    boxShadow: '0 0 40px rgba(34, 197, 94, 0.1)'
-                  }}
+                  className="flex-1 p-5 rounded-xl border border-white/20 bg-white/12 backdrop-blur-md relative overflow-hidden min-h-[200px]"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-[60px]" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[60px]" />
                   
                   {currentExp && (
                     <div className="relative z-10">
@@ -455,16 +453,16 @@ export const Skills = () => {
                       >
                         {language === 'fr' ? currentExp.position_fr : currentExp.position_en}
                       </h3>
-                      <p className="text-green-400 font-medium text-sm mb-2">{currentExp.company_name}</p>
+                      <p className="text-white/90 font-medium text-sm mb-2">{currentExp.company_name}</p>
                       
-                      <div className="flex items-center gap-2 text-white/50 text-xs mb-3">
+                      <div className="flex items-center gap-2 text-white/80 text-xs mb-3">
                         <Calendar size={12} />
                         <span>
                           {formatDate(currentExp.start_date)} — {currentExp.is_current ? (language === 'fr' ? 'Présent' : 'Present') : formatDate(currentExp.end_date || '')}
                         </span>
                       </div>
 
-                      <p className="text-white/60 text-sm line-clamp-3">
+                      <p className="text-white/80 text-sm line-clamp-3">
                         {language === 'fr' ? currentExp.description_fr : currentExp.description_en}
                       </p>
                     </div>
@@ -476,7 +474,7 @@ export const Skills = () => {
                   onClick={nextExp}
                   whileHover={{ scale: 1.1, x: 3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-green-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-green-400 hover:bg-green-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronRight size={28} />
                 </motion.button>
@@ -489,7 +487,8 @@ export const Skills = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col"
+            className="flex flex-col rounded-2xl p-6"
+            style={{ backgroundColor: '#9333ea', boxShadow: '0 0 50px rgba(168, 85, 247, 0.3)' }}
           >
             {/* Title */}
             <div className="text-center mb-4">
@@ -501,7 +500,7 @@ export const Skills = () => {
               </h2>
               {education.length > 0 && (
                 <div 
-                  className="text-white/30 text-xs tracking-widest mt-1"
+                  className="text-white/70 text-xs tracking-widest mt-1"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
                   {String(currentEduIndex + 1).padStart(2, '0')} / {String(education.length).padStart(2, '0')}
@@ -525,7 +524,7 @@ export const Skills = () => {
                   onClick={prevEdu}
                   whileHover={{ scale: 1.1, x: -3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-purple-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-purple-400 hover:bg-purple-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronLeft size={28} />
                 </motion.button>
@@ -537,18 +536,15 @@ export const Skills = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.3 }}
-                  className="flex-1 p-5 rounded-xl border border-purple-500/30 bg-black/70 backdrop-blur-md relative overflow-hidden min-h-[200px]"
-                  style={{
-                    boxShadow: '0 0 40px rgba(168, 85, 247, 0.1)'
-                  }}
+                  className="flex-1 p-5 rounded-xl border border-white/20 bg-white/12 backdrop-blur-md relative overflow-hidden min-h-[200px]"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[60px]" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[60px]" />
                   
                   {currentEdu && (
                     <div className="relative z-10">
                       <div className="flex items-start gap-3 mb-3">
-                        <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-                          <GraduationCap size={20} className="text-purple-400" />
+                        <div className="p-2 rounded-lg bg-white/20 border border-white/30">
+                          <GraduationCap size={20} className="text-white" />
                         </div>
                         <div className="flex-1">
                           <h3 
@@ -557,23 +553,23 @@ export const Skills = () => {
                           >
                             {language === 'fr' ? currentEdu.degree_fr : currentEdu.degree_en}
                           </h3>
-                          <p className="text-purple-400 font-medium text-sm">{currentEdu.institution_name}</p>
+                          <p className="text-white/90 font-medium text-sm">{currentEdu.institution_name}</p>
                         </div>
                       </div>
 
                       {(currentEdu.field_of_study_en || currentEdu.field_of_study_fr) && (
-                        <p className="text-white/60 text-sm mb-2">
+                        <p className="text-white/80 text-sm mb-2">
                           {language === 'fr' ? currentEdu.field_of_study_fr : currentEdu.field_of_study_en}
                         </p>
                       )}
                       
-                      <div className="flex items-center gap-2 text-white/50 text-xs">
+                      <div className="flex items-center gap-2 text-white/80 text-xs">
                         <Calendar size={12} />
                         <span>
                           {formatDate(currentEdu.start_date)} — {currentEdu.is_current ? (language === 'fr' ? 'Présent' : 'Present') : formatDate(currentEdu.end_date || '')}
                         </span>
                         {currentEdu.grade && (
-                          <span className="ml-2 px-2 py-0.5 bg-purple-500/20 rounded text-purple-300 text-xs">
+                          <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-white text-xs">
                             GPA: {currentEdu.grade}
                           </span>
                         )}
@@ -587,7 +583,7 @@ export const Skills = () => {
                   onClick={nextEdu}
                   whileHover={{ scale: 1.1, x: 3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-purple-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-purple-400 hover:bg-purple-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronRight size={28} />
                 </motion.button>
@@ -600,7 +596,8 @@ export const Skills = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col"
+            className="flex flex-col rounded-2xl p-6"
+            style={{ backgroundColor: '#db2777', boxShadow: '0 0 50px rgba(236, 72, 153, 0.3)' }}
           >
             {/* Title */}
             <div className="text-center mb-4">
@@ -612,7 +609,7 @@ export const Skills = () => {
               </h2>
               {hobbies.length > 0 && (
                 <div 
-                  className="text-white/30 text-xs tracking-widest mt-1"
+                  className="text-white/70 text-xs tracking-widest mt-1"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
                   {String(currentHobbyIndex + 1).padStart(2, '0')} / {String(hobbies.length).padStart(2, '0')}
@@ -636,7 +633,7 @@ export const Skills = () => {
                   onClick={prevHobby}
                   whileHover={{ scale: 1.1, x: -3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-pink-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-pink-400 hover:bg-pink-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronLeft size={28} />
                 </motion.button>
@@ -648,21 +645,18 @@ export const Skills = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.3 }}
-                  className="flex-1 p-5 rounded-xl border border-pink-500/30 bg-black/70 backdrop-blur-md relative overflow-hidden min-h-[200px]"
-                  style={{
-                    boxShadow: '0 0 40px rgba(236, 72, 153, 0.1)'
-                  }}
+                  className="flex-1 p-5 rounded-xl border border-white/20 bg-white/12 backdrop-blur-md relative overflow-hidden min-h-[200px]"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-[60px]" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[60px]" />
                   
                   {currentHobby && (
                     <div className="relative z-10 flex flex-col items-center text-center h-full justify-center">
                       <motion.div 
-                        className="p-4 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-500/30 mb-3"
+                        className="p-4 rounded-xl bg-white/20 border border-white/30 mb-3"
                         whileHover={{ scale: 1.05, rotate: 5 }}
                         transition={{ type: 'spring', stiffness: 300 }}
                       >
-                        <HobbyIcon size={32} className="text-pink-400" />
+                        <HobbyIcon size={32} className="text-white" />
                       </motion.div>
 
                       <h3 
@@ -672,7 +666,7 @@ export const Skills = () => {
                         {language === 'fr' ? currentHobby.name_fr : currentHobby.name_en}
                       </h3>
 
-                      <p className="text-white/60 text-sm line-clamp-3">
+                      <p className="text-white/80 text-sm line-clamp-3">
                         {language === 'fr' ? currentHobby.description_fr : currentHobby.description_en}
                       </p>
                     </div>
@@ -684,7 +678,7 @@ export const Skills = () => {
                   onClick={nextHobby}
                   whileHover={{ scale: 1.1, x: 3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-pink-500/50 bg-black/80 backdrop-blur-sm flex items-center justify-center text-pink-400 hover:bg-pink-500/20 transition-all"
+                  className="flex-shrink-0 w-12 h-auto rounded-xl border border-white/40 bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-all"
                 >
                   <ChevronRight size={28} />
                 </motion.button>
