@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -6,16 +6,25 @@ import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
 import {
   ArrowLeft, Plus, Pencil, Trash2, Save, X, Shield,
-  Zap, Briefcase, Gamepad2, ChevronDown
+  Zap, Briefcase, Gamepad2, ChevronDown, FolderOpen, GraduationCap, FileText, MessageSquare, Eye, Star, Check, XCircle, Upload, Image as ImageIcon, Film, Loader2
 } from 'lucide-react';
 import { supabase } from '../services/authService';
 import * as skillsService from '../services/skillsService';
 import * as workExperienceService from '../services/workExperienceService';
 import * as hobbiesService from '../services/hobbiesService';
+import * as projectsService from '../services/projectsService';
+import * as educationService from '../services/educationService';
+import * as resumesService from '../services/resumesService';
+import * as contactService from '../services/contactService';
+import * as testimonialsService from '../services/testimonialsService';
+import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
+import { translateBatch } from '../services/translationService';
 
-type Tab = 'skills' | 'experience' | 'hobbies';
+type Tab = 'skills' | 'experience' | 'hobbies' | 'projects' | 'education' | 'resumes' | 'messages' | 'testimonials';
 
 const font = { fontFamily: "'GT Pressura', sans-serif" };
+const API_HOST = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
 
 // ─── Field component defined OUTSIDE to prevent remounting on every keystroke ───
 const FormField = ({
@@ -61,7 +70,7 @@ const FormField = ({
           onChange={(e) => onChange(name, e.target.checked)}
           className="w-4 h-4 rounded"
         />
-        <span className="text-sm text-white/70" style={font}>Enabled</span>
+        <span className="text-sm text-white/70" style={font}><T>Enabled</T></span>
       </label>
     ) : type === 'range' ? (
       <div className="flex items-center gap-3">
@@ -87,13 +96,158 @@ const FormField = ({
   </div>
 );
 
+// ─── File Upload component defined OUTSIDE to prevent remounting ────
+const FileUploadField = ({
+  label, name, value, onChange, accept, multiple,
+}: {
+  label: string;
+  name: string;
+  value: any;
+  onChange: (name: string, value: any) => void;
+  accept?: string;
+  multiple?: boolean;
+}) => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const doUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (multiple) {
+        // Multiple files — upload each, collect URLs as comma-separated string
+        const urls: string[] = value ? String(value).split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+        for (let i = 0; i < files.length; i++) {
+          const fd = new FormData();
+          fd.append('file', files[i]);
+          const res = await fetch(`${API_HOST}/api/upload`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+          });
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          urls.push(`${API_HOST}${data.url}`);
+        }
+        onChange(name, urls.join(', '));
+      } else {
+        const fd = new FormData();
+        fd.append('file', files[0]);
+        const res = await fetch(`${API_HOST}/api/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+        onChange(name, `${API_HOST}${data.url}`);
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    doUpload(e.dataTransfer.files);
+  };
+
+  // Check if existing value looks like image/video for preview
+  const currentUrl = value ? String(value) : '';
+  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(currentUrl.split(',')[0]?.trim() || '');
+  const isVideo = /\.(mp4|webm|mov)$/i.test(currentUrl.split(',')[0]?.trim() || '');
+
+  return (
+    <div>
+      <label className="block text-[11px] mb-1.5 tracking-[0.15em] uppercase" style={{ ...font, color: 'rgba(255,255,255,0.6)' }}>
+        {label}
+      </label>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => !uploading && fileRef.current?.click()}
+        className="relative rounded-lg cursor-pointer transition-all"
+        style={{
+          border: dragOver ? '2px dashed rgba(0,255,255,0.6)' : '1px solid rgba(255,255,255,0.15)',
+          backgroundColor: dragOver ? 'rgba(0,255,255,0.05)' : 'rgba(255,255,255,0.03)',
+          padding: '0.75rem',
+          minHeight: '4rem',
+        }}
+      >
+        <input
+          ref={fileRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          className="hidden"
+          onChange={(e) => doUpload(e.target.files)}
+        />
+        {uploading ? (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <Loader2 size={18} className="animate-spin" style={{ color: '#22d3ee' }} />
+            <span className="text-xs text-cyan-400" style={font}>Uploading…</span>
+          </div>
+        ) : currentUrl ? (
+          <div className="space-y-2">
+            {/* Thumbnail preview */}
+            {isImage && (
+              <div className="flex flex-wrap gap-1.5 max-h-[4.5rem] overflow-y-auto">
+                {currentUrl.split(',').map((u: string, i: number) => (
+                  <img key={i} src={u.trim()} alt="" className="h-10 w-10 object-cover rounded" />
+                ))}
+              </div>
+            )}
+            {isVideo && (
+              <div className="flex items-center gap-2">
+                <Film size={16} style={{ color: '#22d3ee' }} />
+                <span className="text-xs text-white/60 truncate" style={font}>{currentUrl.split('/').pop()}</span>
+              </div>
+            )}
+            {!isImage && !isVideo && (
+              <div className="flex items-center gap-2">
+                <ImageIcon size={16} style={{ color: '#22d3ee' }} />
+                <span className="text-xs text-white/60 truncate" style={font}>{currentUrl.split('/').pop()}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Upload size={12} style={{ color: 'rgba(255,255,255,0.4)' }} />
+              <span className="text-[10px] text-white/40" style={font}>Click or drag to replace</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-2 gap-1">
+            <Upload size={20} style={{ color: 'rgba(255,255,255,0.3)' }} />
+            <span className="text-[10px] text-white/40" style={font}>{multiple ? 'Click or drag files' : 'Click or drag a file'}</span>
+          </div>
+        )}
+      </div>
+      {currentUrl && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onChange(name, ''); }}
+          className="text-[10px] mt-1 hover:text-red-400 transition-colors"
+          style={{ ...font, color: 'rgba(255,255,255,0.3)' }}
+        >
+          ✕ Remove
+        </button>
+      )}
+    </div>
+  );
+};
+
 // ─── Tab button ─────────────────────────────────────────────────────────
 const SectionButton = ({ active, onClick, icon: Icon, label }: {
   active: boolean; onClick: () => void; icon: any; label: string;
 }) => (
   <button
     onClick={onClick}
-    className="flex items-center gap-3 px-7 py-3.5 rounded-lg text-base tracking-wider uppercase transition-all border"
+    className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm tracking-wider uppercase transition-all border"
     style={{
       ...font,
       backgroundColor: active ? 'rgba(0,255,255,0.1)' : 'transparent',
@@ -109,6 +263,7 @@ const SectionButton = ({ active, onClick, icon: Icon, label }: {
 // ─── Main Component ─────────────────────────────────────────────────────
 export const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('skills');
@@ -117,6 +272,11 @@ export const AdminDashboard = () => {
   const [skills, setSkills] = useState<skillsService.Skill[]>([]);
   const [experiences, setExperiences] = useState<workExperienceService.WorkExperience[]>([]);
   const [hobbies, setHobbies] = useState<hobbiesService.Hobby[]>([]);
+  const [projects, setProjects] = useState<projectsService.Project[]>([]);
+  const [education, setEducation] = useState<educationService.Education[]>([]);
+  const [resumes, setResumes] = useState<resumesService.Resume[]>([]);
+  const [messages, setMessages] = useState<contactService.StoredContactMessage[]>([]);
+  const [testimonials, setTestimonials] = useState<testimonialsService.Testimonial[]>([]);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -174,14 +334,24 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       await syncToken();
-      const [s, e, h] = await Promise.all([
+      const [s, e, h, p, ed, r, m, t] = await Promise.all([
         skillsService.getAllSkills().catch(() => []),
         workExperienceService.getWorkExperience().catch(() => []),
         hobbiesService.getHobbies(false).catch(() => []),
+        projectsService.getProjects().catch(() => []),
+        educationService.getEducation().catch(() => []),
+        resumesService.getResumes().catch(() => []),
+        contactService.getContactMessages().catch(() => []),
+        testimonialsService.getAllTestimonialsAdmin().catch(() => []),
       ]);
       setSkills(s);
       setExperiences(e);
       setHobbies(h);
+      setProjects(p);
+      setEducation(ed);
+      setResumes(r);
+      setMessages(m);
+      setTestimonials(t);
     } finally {
       setLoading(false);
     }
@@ -197,11 +367,19 @@ export const AdminDashboard = () => {
     setEditingId(null);
     setError('');
     if (activeTab === 'skills') {
-      setFormData({ name_en: '', name_fr: '', category: 'Frontend', proficiency: 50, icon_url: '', display_order: 0, is_active: true });
+      setFormData({ name_en: '', category: 'Frontend', proficiency: 50, icon_url: '', display_order: 0, is_active: true });
     } else if (activeTab === 'experience') {
-      setFormData({ company_name: '', position_en: '', position_fr: '', description_en: '', description_fr: '', location: '', employment_type: 'Full-time', start_date: '', end_date: '', is_current: false, display_order: 0, is_active: true });
+      setFormData({ company_name: '', position_en: '', description_en: '', location: '', employment_type: 'Full-time', start_date: '', end_date: '', is_current: false, company_logo_url: '', company_website: '', achievements_en: '', display_order: 0, is_active: true });
+    } else if (activeTab === 'projects') {
+      setFormData({ title_en: '', description_en: '', image_url: '', video_url: '', gallery_urls: '', technologies: '', project_url: '', github_url: '', category: '', display_order: projects.length, is_active: true });
+    } else if (activeTab === 'education') {
+      setFormData({ institution_name: '', degree_en: '', field_of_study_en: '', description_en: '', location: '', start_date: '', end_date: '', is_current: false, grade: '', logo_url: '', achievements_en: '', display_order: 0, is_active: true });
+    } else if (activeTab === 'resumes') {
+      setFormData({ title_en: '', file_url: '', file_name: '', language: 'en', file_size: 0, is_active: true });
+    } else if (activeTab === 'testimonials') {
+      setFormData({ author_name: '', author_email: '', author_position_en: '', author_company: '', author_image_url: '', testimonial_text_en: '', rating: 5, status: 'pending', display_order: 0 });
     } else {
-      setFormData({ name_en: '', name_fr: '', description_en: '', description_fr: '', icon_url: '', image_url: '', display_order: 0, is_active: true });
+      setFormData({ name_en: '', description_en: '', icon_url: '', image_url: '', display_order: 0, is_active: true });
     }
     setModalOpen(true);
   };
@@ -214,8 +392,14 @@ export const AdminDashboard = () => {
     delete data.id;
     delete data.created_at;
     delete data.updated_at;
+    delete data.reviewed_at;
     if (data.start_date) data.start_date = data.start_date.split('T')[0];
     if (data.end_date) data.end_date = data.end_date.split('T')[0];
+    // Convert JSON arrays to comma-separated strings for editing
+    ['gallery_urls', 'technologies', 'achievements_en', 'achievements_fr'].forEach(key => {
+      if (Array.isArray(data[key])) data[key] = data[key].join(', ');
+      else if (data[key] === null || data[key] === undefined) data[key] = '';
+    });
     setFormData(data);
     setModalOpen(true);
   };
@@ -225,14 +409,73 @@ export const AdminDashboard = () => {
     setError('');
     try {
       await syncToken();
-      const payload = { ...formData };
-      Object.keys(payload).forEach(k => {
-        if (payload[k] === '') {
-          if (['icon_url', 'image_url', 'company_logo_url', 'company_website', 'location', 'employment_type', 'end_date'].includes(k)) {
-            payload[k] = null;
+
+      // Auto-translate EN fields → FR
+      const withFr = { ...formData };
+      const enFrPairs: [string, string][] = [
+        ['title_en', 'title_fr'], ['name_en', 'name_fr'],
+        ['description_en', 'description_fr'], ['short_description_en', 'short_description_fr'],
+        ['position_en', 'position_fr'], ['degree_en', 'degree_fr'],
+        ['field_of_study_en', 'field_of_study_fr'],
+        ['testimonial_text_en', 'testimonial_text_fr'],
+        ['author_position_en', 'author_position_fr'],
+      ];
+      const toTranslate: { en: string; fr: string; text: string }[] = [];
+      for (const [en, fr] of enFrPairs) {
+        if (withFr[en] && typeof withFr[en] === 'string' && withFr[en].trim()) {
+          toTranslate.push({ en, fr, text: withFr[en] });
+        }
+      }
+      if (toTranslate.length > 0) {
+        try {
+          const results = await translateBatch(toTranslate.map(t => t.text), 'en', 'fr');
+          for (let i = 0; i < toTranslate.length; i++) {
+            withFr[toTranslate[i].fr] = results[i];
+          }
+        } catch {
+          for (const [en, fr] of enFrPairs) {
+            if (withFr[en] && !withFr[fr]) withFr[fr] = withFr[en];
           }
         }
+      }
+      // Auto-translate achievements
+      if (withFr.achievements_en && typeof withFr.achievements_en === 'string' && withFr.achievements_en.trim()) {
+        try {
+          const items = withFr.achievements_en.split(',').map((s: string) => s.trim()).filter(Boolean);
+          if (items.length > 0) {
+            const results = await translateBatch(items, 'en', 'fr');
+            withFr.achievements_fr = results.join(', ');
+          }
+        } catch {
+          if (!withFr.achievements_fr) withFr.achievements_fr = withFr.achievements_en;
+        }
+      }
+
+      const payload = { ...withFr };
+      // Null out empty optional string fields
+      const nullableStringFields = [
+        'icon_url', 'image_url', 'video_url', 'company_logo_url', 'company_website', 'location',
+        'employment_type', 'end_date', 'start_date', 'project_url', 'github_url',
+        'short_description_en', 'short_description_fr', 'category', 'grade', 'logo_url',
+        'file_size', 'author_position_en', 'author_position_fr', 'author_company', 'author_image_url',
+        'testimonial_text_fr',
+      ];
+      Object.keys(payload).forEach(k => {
+        if (payload[k] === '' && nullableStringFields.includes(k)) {
+          payload[k] = null;
+        }
       });
+      // Convert comma-separated strings to JSON arrays
+      ['gallery_urls', 'technologies', 'achievements_en', 'achievements_fr'].forEach(key => {
+        if (typeof payload[key] === 'string') {
+          const trimmed = payload[key].trim();
+          payload[key] = trimmed ? trimmed.split(',').map((s: string) => s.trim()).filter(Boolean) : null;
+        }
+      });
+      // Convert file_size to number
+      if (payload.file_size !== null && payload.file_size !== undefined) {
+        payload.file_size = parseInt(payload.file_size) || null;
+      }
 
       if (activeTab === 'skills') {
         if (modalMode === 'add') await skillsService.createSkill(payload as any);
@@ -240,6 +483,18 @@ export const AdminDashboard = () => {
       } else if (activeTab === 'experience') {
         if (modalMode === 'add') await workExperienceService.createWorkExperience(payload as any);
         else await workExperienceService.updateWorkExperience(editingId!, payload as any);
+      } else if (activeTab === 'projects') {
+        if (modalMode === 'add') await projectsService.createProject(payload as any);
+        else await projectsService.updateProject(editingId!, payload as any);
+      } else if (activeTab === 'education') {
+        if (modalMode === 'add') await educationService.createEducation(payload as any);
+        else await educationService.updateEducation(editingId!, payload as any);
+      } else if (activeTab === 'resumes') {
+        if (modalMode === 'add') await resumesService.createResume(payload as any);
+        else await resumesService.updateResume(editingId!, payload as any);
+      } else if (activeTab === 'testimonials') {
+        if (modalMode === 'add') await testimonialsService.createTestimonialAdmin(payload);
+        else await testimonialsService.updateTestimonial(editingId!, payload as any);
       } else {
         if (modalMode === 'add') await hobbiesService.createHobby(payload as any);
         else await hobbiesService.updateHobby(editingId!, payload as any);
@@ -247,7 +502,7 @@ export const AdminDashboard = () => {
       setModalOpen(false);
       await loadAll();
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to save');
+      setError(err.response?.data?.detail || err.message || (language === 'fr' ? 'Échec de la sauvegarde' : 'Failed to save'));
     } finally {
       setSaving(false);
     }
@@ -259,11 +514,16 @@ export const AdminDashboard = () => {
       await syncToken();
       if (activeTab === 'skills') await skillsService.deleteSkill(id);
       else if (activeTab === 'experience') await workExperienceService.deleteWorkExperience(id);
+      else if (activeTab === 'projects') await projectsService.deleteProject(id);
+      else if (activeTab === 'education') await educationService.deleteEducation(id);
+      else if (activeTab === 'resumes') await resumesService.deleteResume(id);
+      else if (activeTab === 'messages') await contactService.deleteContactMessage(id);
+      else if (activeTab === 'testimonials') await testimonialsService.deleteTestimonial(id);
       else await hobbiesService.deleteHobby(id);
       setDeleteId(null);
       await loadAll();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete');
+      alert(err.response?.data?.detail || (language === 'fr' ? 'Échec de la suppression' : 'Failed to delete'));
     } finally {
       setDeleting(false);
     }
@@ -276,43 +536,149 @@ export const AdminDashboard = () => {
     if (activeTab === 'skills') {
       return (
         <div className="grid grid-cols-2 gap-3">
-          <FormField label="Name (EN)" name="name_en" value={formData.name_en} onChange={handleFieldChange} />
-          <FormField label="Name (FR)" name="name_fr" value={formData.name_fr} onChange={handleFieldChange} />
-          <FormField label="Category" name="category" type="select" options={existingCategories} value={formData.category} onChange={handleFieldChange} />
-          <FormField label="Proficiency" name="proficiency" type="range" value={formData.proficiency} onChange={handleFieldChange} />
-          <FormField label="Active" name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+          <FormField label={t('f.name', 'Name', 'Nom')} name="name_en" value={formData.name_en} onChange={handleFieldChange} />
+          <FormField label={t('f.category', 'Category', 'Catégorie')} name="category" type="select" options={existingCategories} value={formData.category} onChange={handleFieldChange} />
+          <FormField label={t('f.proficiency', 'Proficiency', 'Compétence')} name="proficiency" type="range" value={formData.proficiency} onChange={handleFieldChange} />
+          <FileUploadField label={t('f.iconUrl', 'Icon', 'Icône')} name="icon_url" accept="image/*" value={formData.icon_url} onChange={handleFieldChange} />
+          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+          <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
         </div>
       );
     }
     if (activeTab === 'experience') {
       return (
-        <div className="grid grid-cols-2 gap-3">
-          <FormField label="Company" name="company_name" value={formData.company_name} onChange={handleFieldChange} />
-          <FormField label="Position (EN)" name="position_en" value={formData.position_en} onChange={handleFieldChange} />
-          <FormField label="Position (FR)" name="position_fr" value={formData.position_fr} onChange={handleFieldChange} />
-          <FormField label="Type" name="employment_type" type="select" options={['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Self-Employed']} value={formData.employment_type} onChange={handleFieldChange} />
-          <div className="col-span-2"><FormField label="Description (EN)" name="description_en" type="textarea" rows={2} value={formData.description_en} onChange={handleFieldChange} /></div>
-          <div className="col-span-2"><FormField label="Description (FR)" name="description_fr" type="textarea" rows={2} value={formData.description_fr} onChange={handleFieldChange} /></div>
-          <FormField label="Start Date" name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
-          <FormField label="End Date" name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
-          <FormField label="Currently Working" name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
-          <FormField label="Active" name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {/* Left panel — Text content */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+            <FormField label={t('f.company', 'Company', 'Entreprise')} name="company_name" value={formData.company_name} onChange={handleFieldChange} />
+            <FormField label={t('f.positionEn', 'Position', 'Poste')} name="position_en" value={formData.position_en} onChange={handleFieldChange} />
+            <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
+            <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
+          </div>
+          {/* Right panel — Details & settings */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
+            <FormField label={t('f.type', 'Type', 'Type')} name="employment_type" type="select" options={['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Self-Employed']} value={formData.employment_type} onChange={handleFieldChange} />
+            <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
+            <FileUploadField label={t('f.companyLogo', 'Company Logo', 'Logo entreprise')} name="company_logo_url" accept="image/*" value={formData.company_logo_url} onChange={handleFieldChange} />
+            <FormField label={t('f.companyWebsite', 'Company Website', 'Site web entreprise')} name="company_website" value={formData.company_website} onChange={handleFieldChange} />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
+              <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
+            </div>
+            <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label={t('f.currentlyWorking', 'Currently Working', 'Actuellement en poste')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
+              <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+            </div>
+          </div>
         </div>
       );
     }
+    if (activeTab === 'projects') {
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {/* Left panel — Text content */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+            <FormField label={t('f.title', 'Title', 'Titre')} name="title_en" value={formData.title_en} onChange={handleFieldChange} />
+            <FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
+            <FormField label={t('f.technologies', 'Technologies (comma-separated)', 'Technologies (séparées par virgules)')} name="technologies" value={formData.technologies} onChange={handleFieldChange} />
+            <FormField label={t('f.category', 'Category', 'Catégorie')} name="category" value={formData.category} onChange={handleFieldChange} />
+            <FormField label={t('f.projectUrl', 'Project URL', 'URL du projet')} name="project_url" value={formData.project_url} onChange={handleFieldChange} />
+            <FormField label={t('f.githubUrl', 'GitHub URL', 'URL GitHub')} name="github_url" value={formData.github_url} onChange={handleFieldChange} />
+          </div>
+          {/* Right panel — Media & settings */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Media & Settings</T></div>
+            <FileUploadField label={t('f.coverMedia', 'Cover (Image or Video)', 'Couverture (image ou vidéo)')} name="image_url" accept="image/*,video/*" value={formData.image_url} onChange={(name: string, val: any) => { handleFieldChange(name, val); if (val) handleFieldChange('video_url', ''); }} />
+            <FileUploadField label={t('f.gallery', 'Gallery Images', 'Images de la galerie')} name="gallery_urls" accept="image/*" multiple value={formData.gallery_urls} onChange={handleFieldChange} />
+            <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+          </div>
+        </div>
+      );
+    }
+    if (activeTab === 'education') {
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {/* Left panel — Text content */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+            <FormField label={t('f.institution', 'Institution', 'Établissement')} name="institution_name" value={formData.institution_name} onChange={handleFieldChange} />
+            <FormField label={t('f.degreeEn', 'Degree', 'Diplôme')} name="degree_en" value={formData.degree_en} onChange={handleFieldChange} />
+            <FormField label={t('f.fieldEn', 'Field of Study', 'Domaine d\'études')} name="field_of_study_en" value={formData.field_of_study_en} onChange={handleFieldChange} />
+            <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
+            <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
+          </div>
+          {/* Right panel — Details & settings */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
+            <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
+            <FormField label={t('f.grade', 'Grade', 'Note')} name="grade" value={formData.grade} onChange={handleFieldChange} />
+            <FileUploadField label={t('f.logoUrl', 'Logo', 'Logo')} name="logo_url" accept="image/*" value={formData.logo_url} onChange={handleFieldChange} />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
+              <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
+            </div>
+            <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label={t('f.currentlyEnrolled', 'Currently Enrolled', 'Actuellement inscrit')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
+              <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (activeTab === 'resumes') {
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label={t('f.titleEn', 'Title', 'Titre')} name="title_en" value={formData.title_en} onChange={handleFieldChange} />
+          <FormField label={t('f.fileName', 'File Name', 'Nom du fichier')} name="file_name" value={formData.file_name} onChange={handleFieldChange} />
+          <div className="col-span-2"><FileUploadField label={t('f.fileUrl', 'Resume File', 'Fichier CV')} name="file_url" accept=".pdf,.doc,.docx" value={formData.file_url} onChange={handleFieldChange} /></div>
+          <FormField label={t('f.language', 'Language', 'Langue')} name="language" type="select" options={['en', 'fr']} value={formData.language} onChange={handleFieldChange} />
+          <FormField label={t('f.fileSize', 'File Size (bytes)', 'Taille du fichier (octets)')} name="file_size" type="number" value={formData.file_size} onChange={handleFieldChange} />
+          <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+        </div>
+      );
+    }
+    if (activeTab === 'testimonials') {
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label={t('f.authorName', 'Author Name', 'Nom de l\'auteur')} name="author_name" value={formData.author_name} onChange={handleFieldChange} />
+          <FormField label={t('f.authorEmail', 'Author Email', 'Email de l\'auteur')} name="author_email" value={formData.author_email} onChange={handleFieldChange} />
+          <FormField label={t('f.position', 'Position', 'Poste')} name="author_position_en" value={formData.author_position_en} onChange={handleFieldChange} />
+          <FormField label={t('f.company', 'Company', 'Entreprise')} name="author_company" value={formData.author_company} onChange={handleFieldChange} />
+          <div className="col-span-2"><FileUploadField label={t('f.authorImage', 'Author Image', 'Image de l\'auteur')} name="author_image_url" value={formData.author_image_url} onChange={handleFieldChange} accept="image/*" /></div>
+          <div className="col-span-2"><FormField label={t('f.testimonial', 'Testimonial', 'Témoignage')} name="testimonial_text_en" type="textarea" rows={3} value={formData.testimonial_text_en} onChange={handleFieldChange} /></div>
+          <FormField label={t('f.rating', 'Rating (1-5)', 'Note (1-5)')} name="rating" type="select" options={['1', '2', '3', '4', '5']} value={String(formData.rating)} onChange={(name: string, val: any) => handleFieldChange(name, parseInt(val))} />
+          <FormField label={t('f.status', 'Status', 'Statut')} name="status" type="select" options={['pending', 'approved', 'rejected']} value={formData.status} onChange={handleFieldChange} />
+          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+        </div>
+      );
+    }
+    // hobbies
     return (
       <div className="grid grid-cols-2 gap-3">
-        <FormField label="Name (EN)" name="name_en" value={formData.name_en} onChange={handleFieldChange} />
-        <FormField label="Name (FR)" name="name_fr" value={formData.name_fr} onChange={handleFieldChange} />
-        <div className="col-span-2"><FormField label="Description (EN)" name="description_en" type="textarea" rows={2} value={formData.description_en} onChange={handleFieldChange} /></div>
-        <div className="col-span-2"><FormField label="Description (FR)" name="description_fr" type="textarea" rows={2} value={formData.description_fr} onChange={handleFieldChange} /></div>
-        <FormField label="Active" name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+        <FormField label={t('f.name', 'Name', 'Nom')} name="name_en" value={formData.name_en} onChange={handleFieldChange} />
+        <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+        <div className="col-span-2"><FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={2} value={formData.description_en} onChange={handleFieldChange} /></div>
+        <FileUploadField label={t('f.icon', 'Icon', 'Icône')} name="icon_url" value={formData.icon_url} onChange={handleFieldChange} accept="image/*" />
+        <FileUploadField label={t('f.image', 'Image', 'Image')} name="image_url" value={formData.image_url} onChange={handleFieldChange} accept="image/*" />
+        <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
       </div>
     );
   };
 
   // ─── Table rows per tab ───────────────────────────────────────────────
-  const currentItems = activeTab === 'skills' ? skills : activeTab === 'experience' ? experiences : hobbies;
+  const currentItems = activeTab === 'skills' ? skills
+    : activeTab === 'experience' ? experiences
+    : activeTab === 'projects' ? projects
+    : activeTab === 'education' ? education
+    : activeTab === 'resumes' ? resumes
+    : activeTab === 'messages' ? messages
+    : activeTab === 'testimonials' ? testimonials
+    : hobbies;
 
   const renderRow = (item: any) => {
     if (activeTab === 'skills') {
@@ -342,11 +708,77 @@ export const AdminDashboard = () => {
           <td className="px-5 py-5 text-sm text-white" style={font}>{e.company_name}</td>
           <td className="px-5 py-5 text-sm text-white/70" style={font}>{e.position_en}</td>
           <td className="px-5 py-5 text-sm text-white/50" style={font}>
-            {e.start_date?.split('T')[0]} → {e.is_current ? 'Present' : e.end_date?.split('T')[0] || '—'}
+            {e.start_date?.split('T')[0]} → {e.is_current ? (language === 'fr' ? 'Présent' : 'Present') : e.end_date?.split('T')[0] || '—'}
           </td>
           <td className="px-5 py-5">
             <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: e.is_active ? '#4ade80' : '#f87171' }} />
           </td>
+        </>
+      );
+    }
+    if (activeTab === 'projects') {
+      const p = item as projectsService.Project;
+      return (
+        <>
+          <td className="px-5 py-5 text-sm text-white" style={font}>{p.title_en}</td>
+          <td className="px-5 py-5 text-sm text-white/70" style={font}>{p.category || '—'}</td>
+          <td className="px-5 py-5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.is_active ? '#4ade80' : '#f87171' }} />
+          </td>
+        </>
+      );
+    }
+    if (activeTab === 'education') {
+      const ed = item as educationService.Education;
+      return (
+        <>
+          <td className="px-5 py-5 text-sm text-white" style={font}>{ed.institution_name}</td>
+          <td className="px-5 py-5 text-sm text-white/70" style={font}>{ed.degree_en}</td>
+          <td className="px-5 py-5 text-sm text-white/50" style={font}>{ed.field_of_study_en}</td>
+          <td className="px-5 py-5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ed.is_active ? '#4ade80' : '#f87171' }} />
+          </td>
+        </>
+      );
+    }
+    if (activeTab === 'resumes') {
+      const r = item as resumesService.Resume;
+      return (
+        <>
+          <td className="px-5 py-5 text-sm text-white" style={font}>{r.title_en}</td>
+          <td className="px-5 py-5 text-sm text-white/70" style={font}>{r.file_name}</td>
+          <td className="px-5 py-5 text-sm text-white/50 uppercase" style={font}>{r.language}</td>
+          <td className="px-5 py-5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.is_active ? '#4ade80' : '#f87171' }} />
+          </td>
+        </>
+      );
+    }
+    if (activeTab === 'messages') {
+      const msg = item as contactService.StoredContactMessage;
+      return (
+        <>
+          <td className="px-5 py-5 text-sm text-white" style={font}>
+            <div className="flex items-center gap-2">
+              {!msg.is_read && <span className="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0" />}
+              {msg.name}
+            </div>
+          </td>
+          <td className="px-5 py-5 text-sm text-white/70" style={font}>{msg.email}</td>
+          <td className="px-5 py-5 text-sm text-white/50 max-w-xs truncate" style={font}>{msg.message}</td>
+          <td className="px-5 py-5 text-sm text-white/40" style={font}>{new Date(msg.created_at).toLocaleDateString()}</td>
+        </>
+      );
+    }
+    if (activeTab === 'testimonials') {
+      const te = item as testimonialsService.Testimonial;
+      const statusColor = te.status === 'approved' ? '#4ade80' : te.status === 'rejected' ? '#f87171' : '#facc15';
+      return (
+        <>
+          <td className="px-5 py-5 text-sm text-white" style={font}>{te.author_name}</td>
+          <td className="px-5 py-5 text-sm text-white/70 max-w-xs truncate" style={font}>{te.testimonial_text_en?.slice(0, 60)}{(te.testimonial_text_en?.length || 0) > 60 ? '…' : ''}</td>
+          <td className="px-5 py-5 text-sm" style={{ ...font, color: statusColor }}>{te.status}</td>
+          <td className="px-5 py-5 text-sm text-white/50" style={font}>{'★'.repeat(te.rating)}{'☆'.repeat(5 - te.rating)}</td>
         </>
       );
     }
@@ -367,7 +799,17 @@ export const AdminDashboard = () => {
     ? ['Name', 'Category', 'Proficiency', 'Active']
     : activeTab === 'experience'
       ? ['Company', 'Position', 'Period', 'Active']
-      : ['Name', 'Description', 'Order', 'Active'];
+      : activeTab === 'projects'
+        ? ['Title', 'Category', 'Active']
+        : activeTab === 'education'
+          ? ['Institution', 'Degree', 'Field of Study', 'Active']
+          : activeTab === 'resumes'
+            ? ['Title', 'File', 'Language', 'Active']
+            : activeTab === 'messages'
+              ? ['Name', 'Email', 'Message', 'Date']
+              : activeTab === 'testimonials'
+                ? ['Author', 'Testimonial', 'Status', 'Rating']
+                : ['Name', 'Description', 'Order', 'Active'];
 
   if (!isAdmin) return null;
 
@@ -388,7 +830,7 @@ export const AdminDashboard = () => {
           style={{ ...font, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.7)' }}
         >
           <ArrowLeft size={20} />
-          <span className="text-base tracking-widest">HOME</span>
+          <span className="text-base tracking-widest"><T>HOME</T></span>
         </motion.button>
 
         {/* Content */}
@@ -403,12 +845,12 @@ export const AdminDashboard = () => {
             <div className="flex items-center justify-center gap-4 mb-2">
               <Shield size={36} style={{ color: '#22d3ee' }} />
               <h1 className="text-5xl md:text-6xl font-black tracking-tight" style={font}>
-                <span className="text-white">ADMIN </span>
-                <span style={{ color: '#22d3ee' }}>DASHBOARD</span>
+                <span className="text-white">{t('admin.admin', 'ADMIN', 'ADMIN')} </span>
+                <span style={{ color: '#22d3ee' }}>{t('admin.dashboard', 'DASHBOARD', 'TABLEAU DE BORD')}</span>
               </h1>
             </div>
             <p className="text-base tracking-[0.3em] uppercase mb-8" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>
-              Manage your portfolio content
+              <T>Manage your portfolio content</T>
             </p>
           </motion.div>
 
@@ -417,11 +859,15 @@ export const AdminDashboard = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex gap-4 mb-10"
+            className="flex flex-wrap justify-center gap-3 mb-10"
           >
-            <SectionButton active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} icon={Zap} label="Skills" />
-            <SectionButton active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} icon={Briefcase} label="Experience" />
-            <SectionButton active={activeTab === 'hobbies'} onClick={() => setActiveTab('hobbies')} icon={Gamepad2} label="Hobbies" />
+            <SectionButton active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} icon={Zap} label={t('admin.skills', 'Skills', 'Compétences')} />
+            <SectionButton active={activeTab === 'projects'} onClick={() => setActiveTab('projects')} icon={FolderOpen} label={t('admin.projects', 'Projects', 'Projets')} />
+            <SectionButton active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} icon={Briefcase} label={t('admin.experience', 'Experience', 'Expérience')} />
+            <SectionButton active={activeTab === 'education'} onClick={() => setActiveTab('education')} icon={GraduationCap} label={t('admin.education', 'Education', 'Éducation')} />
+            <SectionButton active={activeTab === 'hobbies'} onClick={() => setActiveTab('hobbies')} icon={Gamepad2} label={t('admin.hobbies', 'Hobbies', 'Loisirs')} />
+            <SectionButton active={activeTab === 'testimonials'} onClick={() => setActiveTab('testimonials')} icon={Star} label={t('admin.testimonials', 'Testimonials', 'Témoignages')} />
+            <SectionButton active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon={MessageSquare} label={t('admin.messages', 'Messages', 'Messages')} />
           </motion.div>
 
           {/* Add button */}
@@ -431,19 +877,21 @@ export const AdminDashboard = () => {
             transition={{ delay: 0.3 }}
             className="w-full max-w-5xl flex justify-end mb-5"
           >
-            <button
-              onClick={openAdd}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm tracking-wider uppercase transition-all"
-              style={{
-                ...font,
-                backgroundColor: 'rgba(0,255,255,0.1)',
-                border: '1px solid rgba(0,255,255,0.4)',
-                color: '#22d3ee',
-              }}
-            >
-              <Plus size={18} />
-              Add {activeTab === 'skills' ? 'Skill' : activeTab === 'experience' ? 'Experience' : 'Hobby'}
-            </button>
+            {activeTab !== 'messages' && (
+              <button
+                onClick={openAdd}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm tracking-wider uppercase transition-all"
+                style={{
+                  ...font,
+                  backgroundColor: 'rgba(0,255,255,0.1)',
+                  border: '1px solid rgba(0,255,255,0.4)',
+                  color: '#22d3ee',
+                }}
+              >
+                <Plus size={18} />
+                <T>{`Add ${activeTab === 'skills' ? 'Skill' : activeTab === 'experience' ? 'Experience' : activeTab === 'projects' ? 'Project' : activeTab === 'education' ? 'Education' : activeTab === 'resumes' ? 'Resume' : activeTab === 'testimonials' ? 'Testimonial' : 'Hobby'}`}</T>
+              </button>
+            )}
           </motion.div>
 
           {/* Table */}
@@ -459,7 +907,7 @@ export const AdminDashboard = () => {
               </div>
             ) : currentItems.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-white/50 text-lg" style={font}>No {activeTab} yet. Click "Add" to create one.</p>
+                <p className="text-white/50 text-lg" style={font}><T>{`No ${activeTab} yet. Click "Add" to create one.`}</T></p>
               </div>
             ) : (
               <div className="bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 overflow-hidden">
@@ -468,11 +916,11 @@ export const AdminDashboard = () => {
                     <tr className="border-b border-white/10">
                       {tableHeaders.map(h => (
                         <th key={h} className="px-5 py-4 text-left text-sm tracking-wider uppercase" style={{ ...font, color: 'rgba(255,255,255,0.4)' }}>
-                          {h}
+                          <T>{h}</T>
                         </th>
                       ))}
                       <th className="px-5 py-4 text-right text-sm tracking-wider uppercase" style={{ ...font, color: 'rgba(255,255,255,0.4)' }}>
-                        Actions
+                        <T>Actions</T>
                       </th>
                     </tr>
                   </thead>
@@ -482,19 +930,65 @@ export const AdminDashboard = () => {
                         {renderRow(item)}
                         <td className="px-5 py-4.5">
                           <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => openEdit(item)}
-                              className="p-2 rounded-lg transition-all"
-                              style={{ color: '#22d3ee', backgroundColor: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.2)' }}
-                              title="Edit"
-                            >
-                              <Pencil size={20} />
-                            </button>
+                            {activeTab === 'messages' ? (
+                              <>
+                                {!(item as contactService.StoredContactMessage).is_read && (
+                                  <button
+                                    onClick={async () => { await contactService.markMessageAsRead(item.id); await loadAll(); }}
+                                    className="p-2 rounded-lg transition-all"
+                                    style={{ color: '#22d3ee', backgroundColor: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                    title={language === 'fr' ? 'Marquer comme lu' : 'Mark as read'}
+                                  >
+                                    <Eye size={20} />
+                                  </button>
+                                )}
+                              </>
+                            ) : activeTab === 'testimonials' ? (
+                              <>
+                                {(item as testimonialsService.Testimonial).status !== 'approved' && (
+                                  <button
+                                    onClick={async () => { await testimonialsService.approveTestimonial(item.id); await loadAll(); }}
+                                    className="p-2 rounded-lg transition-all"
+                                    style={{ color: '#4ade80', backgroundColor: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)' }}
+                                    title={language === 'fr' ? 'Approuver' : 'Approve'}
+                                  >
+                                    <Check size={20} />
+                                  </button>
+                                )}
+                                {(item as testimonialsService.Testimonial).status !== 'rejected' && (
+                                  <button
+                                    onClick={async () => { await testimonialsService.rejectTestimonial(item.id); await loadAll(); }}
+                                    className="p-2 rounded-lg transition-all"
+                                    style={{ color: '#fb923c', backgroundColor: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.2)' }}
+                                    title={language === 'fr' ? 'Rejeter' : 'Reject'}
+                                  >
+                                    <XCircle size={20} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => openEdit(item)}
+                                  className="p-2 rounded-lg transition-all"
+                                  style={{ color: '#22d3ee', backgroundColor: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                  title={language === 'fr' ? 'Modifier' : 'Edit'}
+                                >
+                                  <Pencil size={20} />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => openEdit(item)}
+                                className="p-2 rounded-lg transition-all"
+                                style={{ color: '#22d3ee', backgroundColor: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                title={language === 'fr' ? 'Modifier' : 'Edit'}
+                              >
+                                <Pencil size={20} />
+                              </button>
+                            )}
                             <button
                               onClick={() => setDeleteId(item.id)}
                               className="p-2 rounded-lg transition-all"
                               style={{ color: '#f87171', backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}
-                              title="Delete"
+                              title={language === 'fr' ? 'Supprimer' : 'Delete'}
                             >
                               <Trash2 size={20} />
                             </button>
@@ -520,7 +1014,6 @@ export const AdminDashboard = () => {
               exit={{ opacity: 0 }}
               className="modal-cursor"
               style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.88)', padding: '1.5rem' }}
-              onClick={(e: React.MouseEvent) => { if (e.target === e.currentTarget) setModalOpen(false); }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -528,7 +1021,7 @@ export const AdminDashboard = () => {
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 className="relative w-full flex flex-col"
                 style={{
-                  maxWidth: '36rem',
+                  maxWidth: ['projects', 'experience', 'education', 'testimonials'].includes(activeTab) ? '64rem' : '36rem',
                   maxHeight: 'calc(100vh - 3rem)',
                   borderRadius: '0.75rem',
                   backgroundColor: 'rgba(10,10,10,0.98)',
@@ -540,7 +1033,7 @@ export const AdminDashboard = () => {
                 {/* Modal header — fixed */}
                 <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10 flex-shrink-0">
                   <h3 className="text-white text-lg tracking-widest uppercase" style={font}>
-                    {modalMode === 'add' ? 'Add' : 'Edit'} {activeTab === 'skills' ? 'Skill' : activeTab === 'experience' ? 'Experience' : 'Hobby'}
+                    <T>{`${modalMode === 'add' ? 'Add' : 'Edit'} ${activeTab === 'skills' ? 'Skill' : activeTab === 'experience' ? 'Experience' : activeTab === 'projects' ? 'Project' : activeTab === 'education' ? 'Education' : activeTab === 'testimonials' ? 'Testimonial' : 'Hobby'}`}</T>
                   </h3>
                   <button
                     onClick={() => setModalOpen(false)}
@@ -567,7 +1060,7 @@ export const AdminDashboard = () => {
                     className="px-5 py-2.5 rounded-lg text-xs tracking-wider uppercase transition-all"
                     style={{ ...font, color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', backgroundColor: 'transparent' }}
                   >
-                    Cancel
+                    <T>Cancel</T>
                   </button>
                   <button
                     onClick={handleSave}
@@ -576,7 +1069,7 @@ export const AdminDashboard = () => {
                     style={{ ...font, backgroundColor: '#ffffff', color: '#000000' }}
                   >
                     <Save size={14} />
-                    {saving ? 'Saving...' : 'Save'}
+                    {saving ? <T>Saving...</T> : <T>Save</T>}
                   </button>
                 </div>
               </motion.div>
@@ -611,9 +1104,9 @@ export const AdminDashboard = () => {
                 <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.4)' }}>
                   <Trash2 size={24} style={{ color: '#f87171' }} />
                 </div>
-                <h3 className="text-white text-lg mb-2" style={font}>Delete this item?</h3>
+                <h3 className="text-white text-lg mb-2" style={font}><T>Delete this item?</T></h3>
                 <p className="text-sm mb-6" style={{ ...font, color: 'rgba(255,255,255,0.6)' }}>
-                  This action cannot be undone. The item will be permanently removed.
+                  <T>This action cannot be undone. The item will be permanently removed.</T>
                 </p>
                 <div className="flex justify-center gap-3">
                   <button
@@ -621,7 +1114,7 @@ export const AdminDashboard = () => {
                     className="px-5 py-2.5 rounded-lg text-xs tracking-wider uppercase transition-all"
                     style={{ ...font, color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', backgroundColor: 'transparent' }}
                   >
-                    Cancel
+                    <T>Cancel</T>
                   </button>
                   <button
                     onClick={() => handleDelete(deleteId)}
@@ -630,7 +1123,7 @@ export const AdminDashboard = () => {
                     style={{ ...font, backgroundColor: '#f87171', color: '#000' }}
                   >
                     <Trash2 size={14} />
-                    {deleting ? 'Deleting...' : 'Delete'}
+                    {deleting ? <T>Deleting...</T> : <T>Delete</T>}
                   </button>
                 </div>
               </motion.div>

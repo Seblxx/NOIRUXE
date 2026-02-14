@@ -4,6 +4,8 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { supabase } from '../services/authService';
+import { T } from './Translate';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LoginModalProps {
   open: boolean;
@@ -16,6 +18,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { language } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +31,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
       if (error) throw error;
       onOpenChange(false);
     } catch (error: any) {
-      alert(error.message || 'Login failed');
+      alert(error.message || (language === 'fr' ? 'Échec de la connexion' : 'Login failed'));
     } finally {
       setLoading(false);
     }
@@ -43,11 +46,11 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         password: signupPassword,
       });
       if (error) throw error;
-      alert('Account created! Please check your email to verify your account, then sign in.');
+      alert(language === 'fr' ? 'Compte créé ! Veuillez vérifier votre courriel pour confirmer votre compte, puis connectez-vous.' : 'Account created! Please check your email to verify your account, then sign in.');
       setSignupEmail('');
       setSignupPassword('');
     } catch (error: any) {
-      alert(error.message || 'Signup failed');
+      alert(error.message || (language === 'fr' ? 'Échec de l\'inscription' : 'Signup failed'));
     } finally {
       setLoading(false);
     }
@@ -57,20 +60,20 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange} modal>
       <DialogContent className="bg-black border-2 border-white/20 text-white sm:max-w-[500px] pointer-events-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Account</DialogTitle>
+          <DialogTitle className="text-2xl font-bold"><T>Account</T></DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white/10">
-            <TabsTrigger value="login">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="login"><T>Sign In</T></TabsTrigger>
+            <TabsTrigger value="signup"><T>Sign Up</T></TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">
             <form onSubmit={handleLogin} className="space-y-4 mt-4">
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder={language === 'fr' ? 'Courriel' : 'Email'}
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 className="bg-white/10 border-white/20 text-white"
@@ -78,7 +81,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
               />
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder={language === 'fr' ? 'Mot de passe' : 'Password'}
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 className="bg-white/10 border-white/20 text-white"
@@ -89,7 +92,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                 disabled={loading}
                 className="w-full bg-white text-black hover:bg-white/90"
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? <T>Signing in...</T> : <T>Sign In</T>}
               </Button>
             </form>
           </TabsContent>
@@ -98,7 +101,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
             <form onSubmit={handleSignup} className="space-y-4 mt-4">
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder={language === 'fr' ? 'Courriel' : 'Email'}
                 value={signupEmail}
                 onChange={(e) => setSignupEmail(e.target.value)}
                 className="bg-white/10 border-white/20 text-white"
@@ -106,7 +109,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
               />
               <Input
                 type="password"
-                placeholder="Password (min. 6 characters)"
+                placeholder={language === 'fr' ? 'Mot de passe (min. 6 caractères)' : 'Password (min. 6 characters)'}
                 value={signupPassword}
                 onChange={(e) => setSignupPassword(e.target.value)}
                 className="bg-white/10 border-white/20 text-white"
@@ -118,7 +121,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                 disabled={loading}
                 className="w-full bg-white text-black hover:bg-white/90"
               >
-                {loading ? 'Creating account...' : 'Sign Up'}
+                {loading ? <T>Creating account...</T> : <T>Sign Up</T>}
               </Button>
             </form>
           </TabsContent>

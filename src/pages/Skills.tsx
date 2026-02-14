@@ -5,6 +5,8 @@ import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
 import { ArrowLeft, ChevronLeft, ChevronRight, Calendar, GraduationCap, Heart, Gamepad2, Music, Camera, Palette, Book, Dumbbell, Plane, Coffee } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
+import { useTranslateField } from '../hooks/useTranslation';
 import * as skillsService from '../services/skillsService';
 import * as workExperienceService from '../services/workExperienceService';
 import * as educationService from '../services/educationService';
@@ -256,16 +258,16 @@ export const Skills = () => {
       {/* Marquee background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none flex flex-col justify-center gap-4">
         <div className="overflow-hidden">
-          <MarqueeGlitchText direction={1} speed={15} opacity={0.04} glowColor="#00ffff" text={language === 'fr' ? 'COMPÉTENCES' : 'SKILLS'} />
+          <MarqueeGlitchText direction={1} speed={15} opacity={0.04} glowColor="#00ffff" text="SKILLS" />
         </div>
         <div className="overflow-hidden">
-          <MarqueeGlitchText direction={-1} speed={18} opacity={0.05} glowColor="#22c55e" text={language === 'fr' ? 'EXPÉRIENCE' : 'EXPERIENCE'} />
+          <MarqueeGlitchText direction={-1} speed={18} opacity={0.05} glowColor="#22c55e" text="EXPERIENCE" />
         </div>
         <div className="overflow-hidden">
-          <MarqueeGlitchText direction={1} speed={12} opacity={0.04} glowColor="#a855f7" text={language === 'fr' ? 'ÉDUCATION' : 'EDUCATION'} />
+          <MarqueeGlitchText direction={1} speed={12} opacity={0.04} glowColor="#a855f7" text="EDUCATION" />
         </div>
         <div className="overflow-hidden">
-          <MarqueeGlitchText direction={-1} speed={16} opacity={0.05} glowColor="#ec4899" text={language === 'fr' ? 'LOISIRS' : 'HOBBIES'} />
+          <MarqueeGlitchText direction={-1} speed={16} opacity={0.05} glowColor="#ec4899" text="HOBBIES" />
         </div>
       </div>
 
@@ -280,7 +282,7 @@ export const Skills = () => {
         style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
       >
         <ArrowLeft size={18} />
-        <span className="text-sm tracking-widest">HOME</span>
+        <span className="text-sm tracking-widest"><T>HOME</T></span>
       </motion.button>
 
       {/* Main content - 2x2 Grid */}
@@ -316,7 +318,7 @@ export const Skills = () => {
             {/* Skills carousel */}
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : (
               <div className="flex items-stretch gap-4">
@@ -365,7 +367,7 @@ export const Skills = () => {
                               style={{ backgroundColor: '#ffffff' }}
                             />
                             <span className="text-white text-sm font-medium">
-                              {language === 'fr' ? skill.name_fr : skill.name_en}
+                              <T>{skill.name_en || skill.name_fr}</T>
                             </span>
                           </div>
                         ))}
@@ -416,11 +418,11 @@ export const Skills = () => {
             {/* Experience carousel */}
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : experiences.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Aucune expérience' : 'No experience'}
+                <T>No experience</T>
               </div>
             ) : (
               <div className="flex items-stretch gap-4">
@@ -451,20 +453,16 @@ export const Skills = () => {
                         className="text-base font-bold text-white mb-1"
                         style={{ fontFamily: "'GT Pressura', sans-serif" }}
                       >
-                        {language === 'fr' ? currentExp.position_fr : currentExp.position_en}
+                        <T>{currentExp.position_en || currentExp.position_fr}</T>
                       </h3>
-                      <p className="text-white/90 font-medium text-sm mb-2">{currentExp.company_name}</p>
+                      <p className="text-white/90 font-medium text-sm mb-2"><T>{currentExp.company_name}</T></p>
                       
                       <div className="flex items-center gap-2 text-white/80 text-xs mb-3">
                         <Calendar size={12} />
                         <span>
-                          {formatDate(currentExp.start_date)} — {currentExp.is_current ? (language === 'fr' ? 'Présent' : 'Present') : formatDate(currentExp.end_date || '')}
+                          {formatDate(currentExp.start_date)} — {currentExp.is_current ? <T>Present</T> : formatDate(currentExp.end_date || '')}
                         </span>
                       </div>
-
-                      <p className="text-white/80 text-sm line-clamp-3">
-                        {language === 'fr' ? currentExp.description_fr : currentExp.description_en}
-                      </p>
                     </div>
                   )}
                 </motion.div>
@@ -511,11 +509,11 @@ export const Skills = () => {
             {/* Education carousel */}
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : education.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Aucune éducation' : 'No education'}
+                <T>No education</T>
               </div>
             ) : (
               <div className="flex items-stretch gap-4">
@@ -551,7 +549,7 @@ export const Skills = () => {
                             className="text-base font-bold text-white"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
                           >
-                            {language === 'fr' ? currentEdu.degree_fr : currentEdu.degree_en}
+                            <T>{currentEdu.degree_en || currentEdu.degree_fr}</T>
                           </h3>
                           <p className="text-white/90 font-medium text-sm">{currentEdu.institution_name}</p>
                         </div>
@@ -559,18 +557,18 @@ export const Skills = () => {
 
                       {(currentEdu.field_of_study_en || currentEdu.field_of_study_fr) && (
                         <p className="text-white/80 text-sm mb-2">
-                          {language === 'fr' ? currentEdu.field_of_study_fr : currentEdu.field_of_study_en}
+                          <T>{currentEdu.field_of_study_en || currentEdu.field_of_study_fr}</T>
                         </p>
                       )}
                       
                       <div className="flex items-center gap-2 text-white/80 text-xs">
                         <Calendar size={12} />
                         <span>
-                          {formatDate(currentEdu.start_date)} — {currentEdu.is_current ? (language === 'fr' ? 'Présent' : 'Present') : formatDate(currentEdu.end_date || '')}
+                          {formatDate(currentEdu.start_date)} — {currentEdu.is_current ? <T>Present</T> : formatDate(currentEdu.end_date || '')}
                         </span>
                         {currentEdu.grade && (
                           <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-white text-xs">
-                            GPA: {currentEdu.grade}
+                            <T>GPA</T>: {currentEdu.grade}
                           </span>
                         )}
                       </div>
@@ -620,11 +618,11 @@ export const Skills = () => {
             {/* Hobbies carousel */}
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : hobbies.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/50 min-h-[200px]">
-                {language === 'fr' ? 'Aucun loisir' : 'No hobbies'}
+                <T>No hobbies</T>
               </div>
             ) : (
               <div className="flex items-stretch gap-4">
@@ -663,11 +661,11 @@ export const Skills = () => {
                         className="text-base font-bold text-white mb-2"
                         style={{ fontFamily: "'GT Pressura', sans-serif" }}
                       >
-                        {language === 'fr' ? currentHobby.name_fr : currentHobby.name_en}
+                        <T>{currentHobby.name_en || currentHobby.name_fr}</T>
                       </h3>
 
                       <p className="text-white/80 text-sm line-clamp-3">
-                        {language === 'fr' ? currentHobby.description_fr : currentHobby.description_en}
+                        <T>{currentHobby.description_en || currentHobby.description_fr}</T>
                       </p>
                     </div>
                   )}

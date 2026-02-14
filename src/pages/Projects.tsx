@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { SimpleMenu } from '../components/SimpleMenu';
-import { ArrowLeft, ChevronLeft, ChevronRight, Grid, X, ExternalLink, Github } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Github } from 'lucide-react';
 import { useMenuItems } from '../hooks/useMenuItems';
+import { T } from '../components/Translate';
+import { useLanguage } from '../contexts/LanguageContext';
+import * as projectsService from '../services/projectsService';
 
 // Glitch text component with custom colors
 const GlitchText = ({ text, color1, color2 }: { text: string; color1: string; color2: string }) => {
@@ -62,51 +65,41 @@ const GlitchText = ({ text, color1, color2 }: { text: string; color1: string; co
   );
 };
 
-// Project data - you can later fetch this from your API
-const projectsData = [
-  {
-    id: 'twin',
-    title: 'TWIN',
-    description: 'A full-stack dual panel stock market prediction interface built with Python, JavaScript, and HTML/CSS. Trained on Yahoo Finance data with login features, deployed via Render. The TWIN- panel offers quick EMA drift predictions, while TWIN+ enables complex analysis using Mean Reversion, GBM, and a Light ML model. Logged-in users can save predictions, track accuracy, or freely explore market trends.',
-    videoUrl: '/Media/TWIN..mp4',
-    images: [
-      '/Media/TWIN picture.jpg',
-      '/Media/TWIN picture II.jpg',
-      '/Media/TWIN picture III.jpg',
-      '/Media/TWIN picture III IV.jpg',
-    ],
-    technologies: ['Python', 'JavaScript', 'HTML/CSS'],
-    projectUrl: 'https://twin-hz5k.onrender.com/',
-    githubUrl: '',
-    glitchColors: { color1: '#ff00ff', color2: '#00bfff' }, // pink and blue
-  },
-  {
-    id: 'vladtech',
-    title: 'VLADTECH',
-    description: 'A full-stack portfolio and booking system for a home renovation company, developed with a team of five. Focused primarily on front-end development, the platform includes an admin dashboard and employee manager to handle diverse business requirements. Built with Java, Spring Boot, Docker, React, and TypeScript.',
-    videoUrl: '/Media/VLADTECH.mp4',
-    images: [
-      '/Media/VLADTECH picture.jpg',
-      '/Media/VLADTECH picture II.jpg',
-      '/Media/VLADTECH picture III.jpg',
-    ],
-    technologies: ['React', 'TypeScript', 'Java', 'Spring Boot', 'Docker'],
-    projectUrl: 'https://vladtech-inc-fudvj.ondigitalocean.app/',
-    githubUrl: '',
-    glitchColors: { color1: '#ffff00', color2: '#ffffff' }, // yellow and white
-  },
+// Cycle through glitch color pairs for projects
+const glitchColorPairs = [
+  { color1: '#ff00ff', color2: '#00bfff' },
+  { color1: '#ffff00', color2: '#ffffff' },
+  { color1: '#00ff88', color2: '#ff3333' },
+  { color1: '#a855f7', color2: '#22d3ee' },
+  { color1: '#ff6b6b', color2: '#4ade80' },
 ];
 
 export const Projects = () => {
   const navigate = useNavigate();
   const { menuItems } = useMenuItems();
+  const { language } = useLanguage();
+  const [projects, setProjects] = useState<projectsService.Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [viewAll, setViewAll] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  // Fetch projects from API
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await projectsService.getProjects();
+        setProjects(data);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   // Custom cursor tracking for Projects page
   useEffect(() => {
@@ -117,52 +110,91 @@ export const Projects = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const currentProject = projectsData[currentProjectIndex];
+  const currentProject = projects[currentProjectIndex];
+
+  // Get glitch colors for a project index
+  const getGlitchColors = (index: number) => glitchColorPairs[index % glitchColorPairs.length];
+
+  // Parse gallery URLs from project or use image_url as fallback
+  const getProjectImages = (project: projectsService.Project) => {
+    if (project.gallery_urls && project.gallery_urls.length > 0) return project.gallery_urls;
+    if (project.image_url) return [project.image_url];
+    return [];
+  };
 
   // Reset image index when project changes
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [currentProjectIndex]);
 
-  // Handle video transition and speed
+  // Handle reset when project changes
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.load();
-      videoRef.current.playbackRate = 2.5; // Play video 2.5x faster
-      videoRef.current.play();
-    }
+    setShowDetails(false);
   }, [currentProjectIndex]);
 
+
   const nextProject = () => {
-    if (isTransitioning) return;
+    if (isTransitioning || projects.length === 0) return;
     setIsTransitioning(true);
     setTimeout(() => {
-      setCurrentProjectIndex((prev) => (prev + 1) % projectsData.length);
+      setCurrentProjectIndex((prev) => (prev + 1) % projects.length);
       setIsTransitioning(false);
     }, 300);
   };
 
   const prevProject = () => {
-    if (isTransitioning) return;
+    if (isTransitioning || projects.length === 0) return;
     setIsTransitioning(true);
     setTimeout(() => {
-      setCurrentProjectIndex((prev) => (prev - 1 + projectsData.length) % projectsData.length);
+      setCurrentProjectIndex((prev) => (prev - 1 + projects.length) % projects.length);
       setIsTransitioning(false);
     }, 300);
   };
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % currentProject.images.length);
+    if (!currentProject) return;
+    const images = getProjectImages(currentProject);
+    if (images.length === 0) return;
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + currentProject.images.length) % currentProject.images.length);
+    if (!currentProject) return;
+    const images = getProjectImages(currentProject);
+    if (images.length === 0) return;
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const selectProject = (index: number) => {
-    setCurrentProjectIndex(index);
-    setViewAll(false);
-  };
+
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-white/20 border-t-cyan-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // No projects
+  if (projects.length === 0) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center crt-effect">
+        <div className="scanline" />
+        <p className="text-white/50 text-lg" style={{ fontFamily: "'GT Pressura', sans-serif" }}><T>No projects yet.</T></p>
+        <motion.button
+          onClick={() => navigate('/')}
+          className="mt-6 text-white/50 hover:text-white transition-colors"
+          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
+        >
+          <T>HOME</T>
+        </motion.button>
+      </div>
+    );
+  }
+
+  const currentImages = getProjectImages(currentProject);
+  const currentGlitch = getGlitchColors(currentProjectIndex);
 
   return (
     <>
@@ -179,9 +211,9 @@ export const Projects = () => {
     <div className="min-h-screen h-screen bg-black relative overflow-hidden crt-effect">
       <div className="scanline" />
 
-      {/* Video Background */}
+      {/* Background: Video or Image */}
       <AnimatePresence mode="wait">
-        {!viewAll && (
+        {currentProject && (
           <motion.div
             key={currentProject.id}
             initial={{ opacity: 0 }}
@@ -190,17 +222,25 @@ export const Projects = () => {
             transition={{ duration: 0.5 }}
             className="absolute inset-0 z-0"
           >
-            <video
-              ref={videoRef}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              style={{ filter: 'brightness(0.35)' }}
-            >
-              <source src={currentProject.videoUrl} type="video/mp4" />
-            </video>
+            {currentProject.video_url ? (
+              <video
+                key={currentProject.video_url}
+                src={currentProject.video_url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+                style={{ filter: 'brightness(0.35)' }}
+              />
+            ) : currentProject.image_url ? (
+              <img
+                src={currentProject.image_url}
+                alt=""
+                className="w-full h-full object-cover"
+                style={{ filter: 'brightness(0.35)' }}
+              />
+            ) : null}
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40" />
           </motion.div>
@@ -218,89 +258,44 @@ export const Projects = () => {
         style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
       >
         <ArrowLeft size={18} />
-        <span className="text-sm tracking-widest">HOME</span>
+        <span className="text-sm tracking-widest"><T>HOME</T></span>
       </motion.button>
 
-      {/* View All button - positioned at top right */}
-      <motion.button
-        onClick={() => setViewAll(!viewAll)}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        whileHover={{ scale: 1.05 }}
-        className="fixed top-8 right-8 flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all z-50"
-        style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.1em' }}
+      {/* Visit Project link - positioned at top right */}
+      {currentProject?.project_url && (
+        <motion.a
+          href={currentProject.project_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          whileHover={{ scale: 1.05 }}
+          className="fixed top-8 right-8 flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all z-50"
+          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.1em' }}
+        >
+          <ExternalLink size={18} />
+          <span className="text-sm tracking-wider"><T>VISIT</T></span>
+        </motion.a>
+      )}
+
+      {/* Immersive Project View - Centered Layout with Description on Right */}
+      <motion.div
+        key="immersive"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4 }}
+        className="relative z-10 h-screen flex items-center justify-center"
       >
-        {viewAll ? <X size={18} /> : <Grid size={18} />}
-        <span className="text-sm tracking-wider">{viewAll ? 'CLOSE' : 'VIEW ALL'}</span>
-      </motion.button>
-
-      <AnimatePresence mode="wait">
-        {viewAll ? (
-          /* View All Grid */
-          <motion.div
-            key="grid"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4 }}
-            className="relative z-10 h-screen flex items-center justify-center px-8"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
-              {projectsData.map((project, index) => (
-                <motion.button
-                  key={project.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => selectProject(index)}
-                  className="group relative aspect-video rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition-all"
-                  whileHover={{ scale: 1.02, y: -5 }}
-                >
-                  <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    style={{ filter: 'brightness(0.4)' }}
-                  >
-                    <source src={project.videoUrl} type="video/mp4" />
-                  </video>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h3 
-                      className="text-4xl md:text-5xl font-black text-white tracking-tight"
-                      style={{ 
-                        fontFamily: "'GT Pressura', sans-serif",
-                        textShadow: '0 0 30px rgba(255,255,255,0.3)'
-                      }}
-                    >
-                      {project.title}
-                    </h3>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          /* Immersive Project View - Centered Layout with Description on Right */
-          <motion.div
-            key="immersive"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="relative z-10 h-screen flex items-center justify-center"
-          >
-            {/* Centered content */}
-            <motion.div
-              key={currentProject.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center"
-            >
+        {/* Centered content */}
+        <motion.div
+          key={currentProject.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center"
+        >
               {/* Title with Project Navigation Arrows */}
               <div className="flex items-center gap-5 mb-2">
                 <motion.button
@@ -313,9 +308,9 @@ export const Projects = () => {
 
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter">
                   <GlitchText 
-                    text={currentProject.title} 
-                    color1={currentProject.glitchColors.color1}
-                    color2={currentProject.glitchColors.color2}
+                    text={(language === 'fr' ? (currentProject.title_fr || currentProject.title_en) : currentProject.title_en).toUpperCase()} 
+                    color1={currentGlitch.color1}
+                    color2={currentGlitch.color2}
                   />
                 </h1>
 
@@ -333,21 +328,23 @@ export const Projects = () => {
                 className="text-white/30 text-xs tracking-widest mb-4"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                {String(currentProjectIndex + 1).padStart(2, '0')} / {String(projectsData.length).padStart(2, '0')}
+                {String(currentProjectIndex + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}
               </div>
 
               {/* Technologies */}
-              <div className="flex flex-wrap justify-center gap-2 mb-8">
-                {currentProject.technologies.map((tech) => (
-                  <span
-                    key={tech}
-                    className="px-3 py-1 text-xs tracking-wider text-white/60 border border-white/20 rounded-full"
-                    style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
+              {currentProject.technologies && currentProject.technologies.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mb-8">
+                  {currentProject.technologies.map((tech) => (
+                    <span
+                      key={tech}
+                      className="px-3 py-1 text-xs tracking-wider text-white/60 border border-white/20 rounded-full"
+                      style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* Image with arrows - CENTERED + FLIP CARD */}
               <div className="flex items-center gap-5">
@@ -376,26 +373,36 @@ export const Projects = () => {
                         transition={{ duration: 0.4, ease: 'easeOut' }}
                         className="absolute inset-0 rounded-lg overflow-hidden border border-white/20"
                       >
-                        <AnimatePresence mode="wait">
-                          <motion.img
-                            key={currentImageIndex}
-                            src={currentProject.images[currentImageIndex]}
-                            alt={`${currentProject.title} screenshot`}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="w-full h-full object-cover"
-                          />
-                        </AnimatePresence>
+                        {currentImages.length > 0 ? (
+                          <AnimatePresence mode="wait">
+                            <motion.img
+                              key={currentImageIndex}
+                              src={currentImages[currentImageIndex]}
+                              alt={`${language === 'fr' ? (currentProject.title_fr || currentProject.title_en) : currentProject.title_en} screenshot`}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="w-full h-full object-cover"
+                            />
+                          </AnimatePresence>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-black/80">
+                            <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
+                              <T>No images</T>
+                            </p>
+                          </div>
+                        )}
                         
                         {/* Image counter */}
-                        <div 
-                          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-white/70 text-xs tracking-wider"
-                          style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                        >
-                          {currentImageIndex + 1} / {currentProject.images.length}
-                        </div>
+                        {currentImages.length > 1 && (
+                          <div 
+                            className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-white/70 text-xs tracking-wider"
+                            style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                          >
+                            {currentImageIndex + 1} / {currentImages.length}
+                          </div>
+                        )}
                       </motion.div>
                     ) : (
                       /* Description View */
@@ -411,14 +418,14 @@ export const Projects = () => {
                           className="text-white text-sm leading-relaxed text-center mb-4"
                           style={{ fontFamily: "'GT Pressura', sans-serif" }}
                         >
-                          {currentProject.description}
+                          {language === 'fr' ? (currentProject.description_fr || currentProject.description_en) : currentProject.description_en}
                         </p>
                         
                         {/* Links */}
                         <div className="flex gap-3">
-                          {currentProject.projectUrl && (
+                          {currentProject.project_url && (
                             <a
-                              href={currentProject.projectUrl}
+                              href={currentProject.project_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -426,12 +433,12 @@ export const Projects = () => {
                               style={{ fontFamily: "'GT Pressura', sans-serif" }}
                             >
                               <ExternalLink size={12} />
-                              VIEW
+                              <T>VIEW</T>
                             </a>
                           )}
-                          {currentProject.githubUrl && (
+                          {currentProject.github_url && (
                             <a
-                              href={currentProject.githubUrl}
+                              href={currentProject.github_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -439,7 +446,7 @@ export const Projects = () => {
                               style={{ fontFamily: "'GT Pressura', sans-serif" }}
                             >
                               <Github size={12} />
-                              CODE
+                              <T>CODE</T>
                             </a>
                           )}
                         </div>
@@ -449,7 +456,7 @@ export const Projects = () => {
                           className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/50 text-xs tracking-wider"
                           style={{ fontFamily: "'GT Pressura', sans-serif" }}
                         >
-                          CLICK TO GO BACK
+                          <T>CLICK TO GO BACK</T>
                         </div>
                       </motion.div>
                     )}
@@ -471,36 +478,16 @@ export const Projects = () => {
                   className="mt-3 text-white/50 text-xs tracking-wider"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
-                  CLICK FOR DETAILS
+                  <T>CLICK FOR DETAILS</T>
                 </div>
               )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Visit button - positioned at bottom right */}
-      {!viewAll && currentProject.projectUrl && (
-        <motion.a
-          href={currentProject.projectUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          whileHover={{ scale: 1.05 }}
-          className="fixed bottom-8 right-8 flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all z-50"
-          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.1em' }}
-        >
-          <ExternalLink size={18} />
-          <span className="text-sm tracking-wider">VISIT</span>
-        </motion.a>
-      )}
+        </motion.div>
+      </motion.div>
 
       {/* Bottom Menu */}
       <SimpleMenu 
         items={menuItems} 
-        isExpanded={!viewAll} 
+        isExpanded={true} 
       />
     </div>
     </>

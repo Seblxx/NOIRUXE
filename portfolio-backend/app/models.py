@@ -31,6 +31,7 @@ class Project(Base):
     short_description_en = Column(String(500))
     short_description_fr = Column(String(500))
     image_url = Column(String(500))
+    video_url = Column(String(500))
     gallery_urls = Column(JSON)
     project_url = Column(String(500))
     github_url = Column(String(500))

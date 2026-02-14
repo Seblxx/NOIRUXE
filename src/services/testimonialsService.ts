@@ -64,3 +64,15 @@ export const rejectTestimonial = async (id: string): Promise<Testimonial> => {
 export const deleteTestimonial = async (id: string): Promise<void> => {
   await api.delete(`/testimonials/${id}`);
 };
+
+// Admin: Update a testimonial (generic update)
+export const updateTestimonial = async (id: string, data: Partial<TestimonialSubmission & { status: string; author_position_fr?: string; display_order?: number }>): Promise<Testimonial> => {
+  const response = await api.put(`/testimonials/${id}`, data);
+  return response.data;
+};
+
+// Admin: Create a testimonial directly (admin-only, can set status)
+export const createTestimonialAdmin = async (data: any): Promise<Testimonial> => {
+  const response = await api.post('/testimonials/', data);
+  return response.data;
+};

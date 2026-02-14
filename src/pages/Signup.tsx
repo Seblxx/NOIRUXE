@@ -171,9 +171,11 @@ export const Signup = () => {
       return () => clearInterval(interval);
     }, []);
 
+    const signupWord = t('signup.word', 'SIGN UP', 'INSCRIPTION');
+    const loginWord = t('login.word', 'LOGIN', 'CONNEXION');
     const marqueeLabel = mode === 'signup' 
-      ? 'SIGN UP • SIGN UP • SIGN UP • SIGN UP • SIGN UP • SIGN UP • SIGN UP • '
-      : 'LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • ';
+      ? `${signupWord} • ${signupWord} • ${signupWord} • ${signupWord} • ${signupWord} • ${signupWord} • ${signupWord} • `
+      : `${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • `;
 
     return (
       <div 
@@ -454,7 +456,7 @@ export const Signup = () => {
                     className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
-                    Email
+                    {t('login.email', 'Email', 'Courriel')}
                   </label>
                   <input
                     type="email"

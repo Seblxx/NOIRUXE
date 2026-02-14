@@ -5,6 +5,7 @@ import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
 import { ArrowLeft, ChevronLeft, ChevronRight, GraduationCap, Calendar } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
 import * as educationService from '../services/educationService';
 import gsap from 'gsap';
 
@@ -210,7 +211,7 @@ export const Education = () => {
         style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
       >
         <ArrowLeft size={18} />
-        <span className="text-sm tracking-widest">HOME</span>
+        <span className="text-sm tracking-widest"><T>HOME</T></span>
       </motion.button>
 
       {/* Main content */}
@@ -240,11 +241,11 @@ export const Education = () => {
 
           {loading ? (
             <div className="text-center text-white/50 py-12">
-              {language === 'fr' ? 'Chargement...' : 'Loading...'}
+              <T>Loading...</T>
             </div>
           ) : education.length === 0 ? (
             <div className="text-center text-white/50 py-12">
-              {language === 'fr' ? 'Aucune éducation trouvée' : 'No education found'}
+              <T>No education found</T>
             </div>
           ) : (
             <>
@@ -289,33 +290,33 @@ export const Education = () => {
                       className="text-2xl md:text-3xl font-bold text-white mb-2"
                       style={{ fontFamily: "'GT Pressura', sans-serif" }}
                     >
-                      {language === 'fr' ? currentEdu.degree_fr : currentEdu.degree_en}
+                      <T>{currentEdu.degree_en || currentEdu.degree_fr}</T>
                     </h2>
 
-                    <p className="text-xl text-purple-400 mb-2">{currentEdu.institution_name}</p>
+                    <p className="text-xl text-purple-400 mb-2"><T>{currentEdu.institution_name}</T></p>
 
                     {(currentEdu.field_of_study_en || currentEdu.field_of_study_fr) && (
                       <p className="text-white/60 mb-4">
-                        {language === 'fr' ? currentEdu.field_of_study_fr : currentEdu.field_of_study_en}
+                        <T>{currentEdu.field_of_study_en || currentEdu.field_of_study_fr}</T>
                       </p>
                     )}
 
                     <div className="flex items-center justify-center gap-2 text-white/50 mb-6">
                       <Calendar size={16} />
                       <span>
-                        {formatDate(currentEdu.start_date)} - {currentEdu.is_current ? (language === 'fr' ? 'Présent' : 'Present') : formatDate(currentEdu.end_date || '')}
+                        {formatDate(currentEdu.start_date)} - {currentEdu.is_current ? <T>Present</T> : formatDate(currentEdu.end_date || '')}
                       </span>
                     </div>
 
                     {(currentEdu.description_en || currentEdu.description_fr) && (
                       <p className="text-white/60 leading-relaxed max-w-xl mx-auto">
-                        {language === 'fr' ? currentEdu.description_fr : currentEdu.description_en}
+                        <T>{currentEdu.description_en || currentEdu.description_fr || ''}</T>
                       </p>
                     )}
 
                     {currentEdu.grade && (
                       <div className="mt-6 inline-block px-4 py-2 bg-purple-500/20 rounded-full text-sm text-purple-300 border border-purple-500/30">
-                        GPA: {currentEdu.grade}
+                        <T>GPA</T>: {currentEdu.grade}
                       </div>
                     )}
                   </div>

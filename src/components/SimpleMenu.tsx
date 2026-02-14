@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { Globe } from 'lucide-react';
 
 interface MenuItem {
   label: string;
@@ -14,7 +15,11 @@ interface SimpleMenuProps {
 
 export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'fr' : 'en');
+  };
 
   // Handle spacebar to toggle menu
   useEffect(() => {
@@ -70,6 +75,29 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
                     {item.label}
                   </button>
                 ))}
+
+                <div className="h-6 w-px bg-white/30" />
+
+                {/* Language Toggle */}
+                <button
+                  onClick={toggleLanguage}
+                  className="flex items-center gap-1.5 text-white/60 hover:text-white uppercase tracking-wider transition-colors"
+                  style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
+                  title={language === 'en' ? 'Passer au français' : 'Switch to English'}
+                >
+                  <Globe size={14} />
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={language}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {language === 'en' ? 'FR' : 'EN'}
+                    </motion.span>
+                  </AnimatePresence>
+                </button>
               </motion.div>
             ) : (
               <motion.button
@@ -121,6 +149,37 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
                   </div>
                 </button>
               ))}
+
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLanguage}
+                className="group relative text-white/50 uppercase tracking-wider hover:text-cyan-400 transition-all duration-300 text-left"
+                style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700, fontSize: '1rem' }}
+                title={language === 'en' ? 'Passer au français' : 'Switch to English'}
+              >
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    className="h-px bg-gradient-to-r from-cyan-500 to-transparent"
+                    initial={{ width: 0 }}
+                    whileHover={{ width: '2rem' }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <span className="writing-mode-vertical-rl rotate-180 whitespace-nowrap flex items-center gap-1">
+                    <Globe size={12} />
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={language}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        {language === 'en' ? 'FR' : 'EN'}
+                      </motion.span>
+                    </AnimatePresence>
+                  </span>
+                </div>
+              </button>
             </div>
           </div>
         </motion.div>

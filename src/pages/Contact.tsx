@@ -7,6 +7,8 @@ import { SimpleMenu } from '../components/SimpleMenu';
 import { Github, Linkedin, Mail, Send } from 'lucide-react';
 import * as contactService from '../services/contactService';
 import { useMenuItems } from '../hooks/useMenuItems';
+import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
 
 // Glitch text component matching login page
 const GlitchText = ({ text }: { text: string }) => {
@@ -68,6 +70,7 @@ const GlitchText = ({ text }: { text: string }) => {
 export const Contact = () => {
   const navigate = useNavigate();
   const { menuItems } = useMenuItems();
+  const { language } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -83,7 +86,7 @@ export const Contact = () => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address.');
+      setError(language === 'fr' ? 'Veuillez entrer une adresse courriel valide.' : 'Please enter a valid email address.');
       setLoading(false);
       return;
     }
@@ -95,7 +98,7 @@ export const Contact = () => {
       setEmail('');
       setMessage('');
     } catch (err: any) {
-      setError(err.message || 'Failed to send message. Please try again.');
+      setError(err.message || (language === 'fr' ? 'Échec de l\'envoi du message. Veuillez réessayer.' : 'Failed to send message. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -213,13 +216,13 @@ export const Contact = () => {
               className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none"
               style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
-              <GlitchText text="CONTACT" />
+              <GlitchText text={language === 'fr' ? 'CONTACT' : 'CONTACT'} />
             </h1>
             <p 
               className="mt-4 text-white/40 text-sm tracking-widest uppercase"
               style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
-              Let's connect
+              <T>Let's connect</T>
             </p>
           </motion.div>
 
@@ -263,7 +266,7 @@ export const Contact = () => {
               className="text-white/30 text-xs tracking-widest uppercase"
               style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
-              or send a message
+              <T>or send a message</T>
             </span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
@@ -281,20 +284,20 @@ export const Contact = () => {
                 className="text-xl text-white mb-2"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                Message Sent!
+                <T>Message Sent!</T>
               </h3>
               <p 
                 className="text-white/50 text-sm mb-6"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                Thanks for reaching out. I'll get back to you soon.
+                <T>Thanks for reaching out. I'll get back to you soon.</T>
               </p>
               <button
                 onClick={() => setSuccess(false)}
                 className="text-white/50 hover:text-white text-sm tracking-wider uppercase transition-colors"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                Send another message
+                <T>Send another message</T>
               </button>
             </motion.div>
           ) : (
@@ -320,7 +323,7 @@ export const Contact = () => {
                     className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
-                    Name
+                    <T>Name</T>
                   </label>
                   <input
                     type="text"
@@ -329,7 +332,7 @@ export const Contact = () => {
                     required
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                    placeholder="Your name"
+                    placeholder={language === 'fr' ? 'Votre nom' : 'Your name'}
                   />
                 </motion.div>
 
@@ -342,7 +345,7 @@ export const Contact = () => {
                     className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
-                    Email
+                    <T>Email</T>
                   </label>
                   <input
                     type="email"
@@ -351,7 +354,7 @@ export const Contact = () => {
                     required
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                    placeholder="your@email.com"
+                    placeholder={language === 'fr' ? 'votre@courriel.com' : 'your@email.com'}
                   />
                 </motion.div>
 
@@ -364,7 +367,7 @@ export const Contact = () => {
                     className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
-                    Message
+                    <T>Message</T>
                   </label>
                   <textarea
                     value={message}
@@ -373,7 +376,7 @@ export const Contact = () => {
                     rows={4}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all resize-none"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                    placeholder="What's on your mind?"
+                    placeholder={language === 'fr' ? 'Qu\'avez-vous en tête ?' : "What's on your mind?"}
                   />
                 </motion.div>
 
@@ -389,7 +392,7 @@ export const Contact = () => {
                     className="group relative w-full py-4 bg-white text-black font-bold tracking-[0.2em] uppercase text-sm rounded-lg hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden flex items-center justify-center gap-2"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
-                    <span>{loading ? 'Sending...' : 'Send Message'}</span>
+                    <span>{loading ? <T>Sending...</T> : <T>Send Message</T>}</span>
                     {!loading && <Send size={16} />}
                   </button>
                 </motion.div>

@@ -10,6 +10,8 @@ import { supabase } from '../services/authService';
 import * as testimonialsService from '../services/testimonialsService';
 import type { Testimonial, TestimonialSubmission } from '../services/testimonialsService';
 import { useMenuItems } from '../hooks/useMenuItems';
+import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
 
 // Glitch text component
 const GlitchText = ({ text }: { text: string }) => {
@@ -112,9 +114,9 @@ const MarqueeGlitchText = ({ direction = 1, speed = 20, opacity = 0.1, glowColor
 // Status badge - uses inline styles to guarantee visibility
 const StatusBadge = ({ status }: { status: string }) => {
   const config: Record<string, { icon: typeof Clock; label: string; textColor: string; bgColor: string; borderColor: string }> = {
-    pending: { icon: Clock, label: 'Pending', textColor: '#facc15', bgColor: 'rgba(250,204,21,0.12)', borderColor: 'rgba(250,204,21,0.4)' },
-    approved: { icon: Check, label: 'Approved', textColor: '#4ade80', bgColor: 'rgba(74,222,128,0.12)', borderColor: 'rgba(74,222,128,0.4)' },
-    rejected: { icon: X, label: 'Rejected', textColor: '#f87171', bgColor: 'rgba(248,113,113,0.12)', borderColor: 'rgba(248,113,113,0.4)' },
+    pending: { icon: Clock, label: 'Pending', textColor: '#facc15', bgColor: 'rgba(250,204,21,0.12)', borderColor: 'rgba(250,204,21,0.4)' } as const,
+    approved: { icon: Check, label: 'Approved', textColor: '#4ade80', bgColor: 'rgba(74,222,128,0.12)', borderColor: 'rgba(74,222,128,0.4)' } as const,
+    rejected: { icon: X, label: 'Rejected', textColor: '#f87171', bgColor: 'rgba(248,113,113,0.12)', borderColor: 'rgba(248,113,113,0.4)' } as const,
   };
   const c = config[status] || { icon: Clock, label: status, textColor: '#ffffff', bgColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' };
   const Icon = c.icon;
@@ -129,7 +131,7 @@ const StatusBadge = ({ status }: { status: string }) => {
       }}
     >
       <Icon size={12} />
-      {c.label}
+      <T>{c.label}</T>
     </span>
   );
 };
@@ -139,6 +141,7 @@ const ITEMS_PER_PAGE = 4;
 export const Testimonials = () => {
   const navigate = useNavigate();
   const { menuItems } = useMenuItems();
+  const { language } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'public' | 'admin'>('public');
 
@@ -245,7 +248,7 @@ export const Testimonials = () => {
     setSubmitError('');
 
     if (!formData.testimonial_text_en.trim()) {
-      setSubmitError('Please enter a testimonial.');
+      setSubmitError(language === 'fr' ? 'Veuillez entrer un témoignage.' : 'Please enter a testimonial.');
       return;
     }
 
@@ -255,7 +258,7 @@ export const Testimonials = () => {
       setSubmitSuccess(true);
       setFormData({ ...formData, author_name: '', testimonial_text_en: '' });
     } catch (err: any) {
-      setSubmitError(err.response?.data?.detail || 'Failed to submit testimonial. Please try again.');
+      setSubmitError(err.response?.data?.detail || (language === 'fr' ? 'Échec de la soumission du témoignage. Veuillez réessayer.' : 'Failed to submit testimonial. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -292,7 +295,7 @@ export const Testimonials = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to permanently delete this testimonial?')) return;
+    if (!window.confirm(language === 'fr' ? 'Êtes-vous sûr de vouloir supprimer définitivement ce témoignage ?' : 'Are you sure you want to permanently delete this testimonial?')) return;
     setActionLoading(id);
     try {
       await syncToken();
@@ -362,7 +365,7 @@ export const Testimonials = () => {
             className="mt-2 text-sm tracking-widest uppercase"
             style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
           >
-            What people say
+            <T>What people say</T>
           </p>
         </motion.div>
 
@@ -383,7 +386,7 @@ export const Testimonials = () => {
               }`}
               style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
-              Public View
+              <T>Public View</T>
             </button>
             <button
               onClick={() => setActiveTab('admin')}
@@ -396,7 +399,7 @@ export const Testimonials = () => {
               }}
             >
               <Shield size={14} />
-              Admin Panel
+              <T>Admin Panel</T>
             </button>
           </motion.div>
         )}
@@ -412,7 +415,7 @@ export const Testimonials = () => {
               <div className="flex flex-col items-center justify-center py-12">
                 <MessageSquareQuote size={48} className="mb-4" style={{ color: 'rgba(255,255,255,0.6)' }} />
                 <p className="text-lg mb-8" style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}>
-                  No testimonials yet. Be the first to share your experience!
+                  <T>No testimonials yet. Be the first to share your experience!</T>
                 </p>
                 {!showForm && !submitSuccess && (
                   <motion.button
@@ -423,7 +426,7 @@ export const Testimonials = () => {
                     style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
                   >
                     <MessageSquareQuote size={18} />
-                    <span className="text-sm uppercase tracking-widest">Write a Testimonial</span>
+                    <span className="text-sm uppercase tracking-widest"><T>Write a Testimonial</T></span>
                   </motion.button>
                 )}
               </div>
@@ -464,7 +467,7 @@ export const Testimonials = () => {
                             className="text-white text-sm leading-relaxed mb-4 relative z-10"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
                           >
-                            &quot;{t.testimonial_text_en}&quot;
+                            &quot;{language === 'fr' ? (t.testimonial_text_fr || t.testimonial_text_en) : t.testimonial_text_en}&quot;
                           </p>
                           <div className="pt-3 border-t border-white/10">
                             <p
@@ -522,7 +525,7 @@ export const Testimonials = () => {
                       style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
                     >
                       <MessageSquareQuote size={16} />
-                      <span className="text-xs uppercase tracking-widest">Write a Testimonial</span>
+                      <span className="text-xs uppercase tracking-widest"><T>Write a Testimonial</T></span>
                     </motion.button>
                   )}
                 </div>
@@ -557,7 +560,7 @@ export const Testimonials = () => {
                   }`}
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
-                  {filter.label}
+                  <T>{filter.label}</T>
                 </button>
               ))}
             </motion.div>
@@ -577,7 +580,7 @@ export const Testimonials = () => {
                   className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white hover:bg-white/10 text-xs tracking-wider uppercase transition-all"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
-                  Retry
+                  <T>Retry</T>
                 </button>
               </motion.div>
             )}
@@ -590,7 +593,7 @@ export const Testimonials = () => {
               <div className="flex flex-col items-center justify-center py-12">
                 <MessageSquareQuote size={48} className="mb-4" style={{ color: 'rgba(255,255,255,0.7)' }} />
                 <p className="text-white text-lg" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
-                  No testimonials found{adminFilter ? ` with status "${adminFilter}"` : ''}.
+                  <T>{`No testimonials found${adminFilter ? ` with status "${adminFilter}"` : ''}.`}</T>
                 </p>
               </div>
             ) : (
@@ -631,7 +634,7 @@ export const Testimonials = () => {
                                   className="text-xs"
                                   style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.6)' }}
                                 >
-                                  {new Date(t.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                  {new Date(t.created_at).toLocaleDateString(language === 'fr' ? 'fr-CA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                                 </span>
                               </div>
 
@@ -639,7 +642,7 @@ export const Testimonials = () => {
                                 className="text-white text-sm leading-relaxed mb-2 line-clamp-2"
                                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
                               >
-                                &quot;{t.testimonial_text_en}&quot;
+                                &quot;{language === 'fr' ? (t.testimonial_text_fr || t.testimonial_text_en) : t.testimonial_text_en}&quot;
                               </p>
 
                               <div className="flex items-center gap-2">
@@ -669,7 +672,7 @@ export const Testimonials = () => {
                                   title="Approve"
                                 >
                                   <Check size={14} />
-                                  <span>Approve</span>
+                                  <span><T>Approve</T></span>
                                 </button>
                               )}
                               {t.status !== 'rejected' && (
@@ -686,7 +689,7 @@ export const Testimonials = () => {
                                   title="Reject"
                                 >
                                   <X size={14} />
-                                  <span>Reject</span>
+                                  <span><T>Reject</T></span>
                                 </button>
                               )}
                               <button
@@ -702,7 +705,7 @@ export const Testimonials = () => {
                                 title="Delete"
                               >
                                 <Trash2 size={14} />
-                                <span>Delete</span>
+                                <span><T>Delete</T></span>
                               </button>
                             </div>
                           </div>
@@ -786,7 +789,7 @@ export const Testimonials = () => {
                   </button>
 
                   <h3 className="text-white text-xl mb-8 tracking-widest uppercase text-center" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
-                    Write a Testimonial
+                    <T>Write a Testimonial</T>
                   </h3>
 
                   {submitError && (
@@ -806,7 +809,7 @@ export const Testimonials = () => {
                         className="block text-xs mb-2 tracking-[0.2em] uppercase"
                         style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
                       >
-                        Name *
+                        <T>Name</T> *
                       </label>
                       <input
                         type="text"
@@ -815,7 +818,7 @@ export const Testimonials = () => {
                         required
                         className="w-full px-5 py-4 rounded-lg text-base focus:outline-none transition-all"
                         style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', cursor: 'text' }}
-                        placeholder="Your name"
+                        placeholder={language === 'fr' ? 'Votre nom' : 'Your name'}  // Placeholder text stays English
                       />
                     </div>
 
@@ -824,7 +827,7 @@ export const Testimonials = () => {
                         className="block text-xs mb-2 tracking-[0.2em] uppercase"
                         style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
                       >
-                        Your Message *
+                        <T>Your Message</T> *
                       </label>
                       <textarea
                         value={formData.testimonial_text_en}
@@ -833,7 +836,7 @@ export const Testimonials = () => {
                         rows={6}
                         className="w-full px-5 py-4 rounded-lg text-base focus:outline-none transition-all resize-none"
                         style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', cursor: 'text' }}
-                        placeholder="Your message"
+                        placeholder={language === 'fr' ? 'Votre message' : 'Your message'}
                       />
                     </div>
 
@@ -844,7 +847,7 @@ export const Testimonials = () => {
                         className="w-full py-4 font-bold tracking-[0.2em] uppercase text-sm rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         style={{ fontFamily: "'GT Pressura', sans-serif", backgroundColor: '#ffffff', color: '#000000', cursor: 'pointer !important' } as React.CSSProperties}
                       >
-                        <span>{submitting ? 'Submitting...' : 'Submit Testimonial'}</span>
+                        <span>{submitting ? <T>Submitting...</T> : <T>Submit Testimonial</T>}</span>
                         {!submitting && <Send size={16} />}
                       </button>
                     </div>
@@ -853,7 +856,7 @@ export const Testimonials = () => {
                       className="text-xs text-center"
                       style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.6)' }}
                     >
-                      Your testimonial will be reviewed before being published.
+                      <T>Your testimonial will be reviewed before being published.</T>
                     </p>
                   </form>
                 </motion.div>
@@ -882,20 +885,20 @@ export const Testimonials = () => {
                     className="text-xl text-white mb-2"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
-                    Thank You!
+                    <T>Thank You!</T>
                   </h3>
                   <p
                     className="text-sm mb-6"
                     style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
                   >
-                    Your testimonial has been submitted and is awaiting review.
+                    <T>Your testimonial has been submitted and is awaiting review.</T>
                   </p>
                   <button
                     onClick={() => { setSubmitSuccess(false); setShowForm(false); }}
                     className="text-sm tracking-wider uppercase transition-colors"
                     style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)', cursor: 'pointer !important' } as React.CSSProperties}
                   >
-                    Done
+                    <T>Done</T>
                   </button>
                 </motion.div>
               </motion.div>

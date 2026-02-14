@@ -5,6 +5,7 @@ import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
 import { ArrowLeft, ChevronLeft, ChevronRight, Gamepad2, Music, Camera, Palette, Book, Dumbbell, Plane, Coffee, Heart } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
 import * as hobbiesService from '../services/hobbiesService';
 import gsap from 'gsap';
 
@@ -225,7 +226,7 @@ export const Hobbies = () => {
         style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
       >
         <ArrowLeft size={18} />
-        <span className="text-sm tracking-widest">HOME</span>
+        <span className="text-sm tracking-widest"><T>HOME</T></span>
       </motion.button>
 
       {/* Main content */}
@@ -255,11 +256,11 @@ export const Hobbies = () => {
 
           {loading ? (
             <div className="text-center text-white/50 py-12">
-              {language === 'fr' ? 'Chargement...' : 'Loading...'}
+              <T>Loading...</T>
             </div>
           ) : hobbies.length === 0 ? (
             <div className="text-center text-white/50 py-12">
-              {language === 'fr' ? 'Aucun loisir trouvé' : 'No hobbies found'}
+              <T>No hobbies found</T>
             </div>
           ) : (
             <>
@@ -308,11 +309,11 @@ export const Hobbies = () => {
                       className="text-2xl md:text-3xl font-bold text-white mb-4"
                       style={{ fontFamily: "'GT Pressura', sans-serif" }}
                     >
-                      {language === 'fr' ? currentHobby.name_fr : currentHobby.name_en}
+                      <T>{currentHobby.name_en || currentHobby.name_fr}</T>
                     </h2>
 
                     <p className="text-white/60 leading-relaxed max-w-md mx-auto">
-                      {language === 'fr' ? currentHobby.description_fr : currentHobby.description_en}
+                      <T>{currentHobby.description_en || currentHobby.description_fr}</T>
                     </p>
                   </div>
                 )}

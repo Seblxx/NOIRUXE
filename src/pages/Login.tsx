@@ -5,6 +5,8 @@ import { supabase } from '../services/authService';
 import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { T } from '../components/Translate';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Glitch text component for LOGIN title
 const GlitchText = ({ text }: { text: string }) => {
@@ -65,6 +67,7 @@ const GlitchText = ({ text }: { text: string }) => {
 
 export const Login = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -98,7 +101,7 @@ export const Login = () => {
       if (signInError) throw signInError;
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      setError(err.message || t('login.error', 'An error occurred', 'Une erreur est survenue'));
     } finally {
       setLoading(false);
     }
@@ -116,7 +119,8 @@ export const Login = () => {
       return () => clearInterval(interval);
     }, []);
 
-    const text = 'LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • LOGIN • ';
+    const loginWord = t('login.word', 'LOGIN', 'CONNEXION');
+    const text = `${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • ${loginWord} • `;
 
     return (
       <div 
@@ -185,7 +189,7 @@ export const Login = () => {
           style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.2em' }}
         >
           <ArrowLeft size={18} />
-          <span className="text-sm tracking-widest">HOME</span>
+          <span className="text-sm tracking-widest"><T>HOME</T></span>
         </motion.button>
 
         {/* Login card container */}
@@ -211,7 +215,7 @@ export const Login = () => {
               className="text-6xl md:text-7xl font-black tracking-tight leading-none"
               style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
-              <GlitchText text="LOGIN" />
+              <GlitchText text={t('login.title', 'LOGIN', 'CONNEXION')} />
             </h1>
           </motion.div>
 
@@ -236,7 +240,7 @@ export const Login = () => {
                 className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                Email
+                <T>Email</T>
               </label>
               <input
                 type="email"
@@ -259,7 +263,7 @@ export const Login = () => {
                 className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                Password
+                <T>Password</T>
               </label>
               <div className="relative">
                 <input
@@ -294,7 +298,7 @@ export const Login = () => {
                 className="group relative w-full py-4 bg-white text-black font-bold tracking-[0.2em] uppercase text-sm rounded-lg hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? <T>Signing in...</T> : <T>Sign In</T>}
               </button>
             </motion.div>
           </form>

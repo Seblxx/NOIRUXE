@@ -1,8 +1,10 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.database import engine, Base
-from app.routers import skills, projects, work_experience, education, contact, auth, hobbies, resumes, testimonials
+from app.routers import skills, projects, work_experience, education, contact, auth, hobbies, resumes, testimonials, upload
 
 # Create database tables
 @asynccontextmanager
@@ -20,9 +22,21 @@ app = FastAPI(
 )
 
 # CORS Configuration
+cors_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://localhost:4200",
+]
+
+# Add production frontend URL from environment variable
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    cors_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:4200"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,6 +52,12 @@ app.include_router(contact.router, prefix="/api/contact", tags=["Contact"])
 app.include_router(hobbies.router, prefix="/api/hobbies", tags=["Hobbies"])
 app.include_router(resumes.router, prefix="/api/resumes", tags=["Resumes"])
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
+app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
+
+# Serve uploaded files as static
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 @app.get("/")
 async def root():

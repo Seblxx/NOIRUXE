@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, X, ExternalLink, Github } from 'lucide-react';
 import { Project } from '@/services/projectsService';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { T } from '@/components/Translate';
 
 interface ProjectModalProps {
   project: Project | null;
@@ -12,6 +14,7 @@ interface ProjectModalProps {
 
 export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { language } = useLanguage();
 
   // Reset image index when project changes or modal closes
   useEffect(() => {
@@ -44,7 +47,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-black/95 border-2 border-cyan-500/50 text-white pointer-events-auto">
         <DialogHeader>
           <DialogTitle className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-pink-500" style={{ fontFamily: 'GT Pressura, sans-serif' }}>
-            {project.title_en}
+            {language === 'fr' ? (project.title_fr || project.title_en) : project.title_en}
           </DialogTitle>
         </DialogHeader>
 
@@ -62,12 +65,12 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     className="w-full h-full object-contain"
                   >
                     <source src={allMedia[currentImageIndex]} type="video/mp4" />
-                    Your browser does not support the video tag.
+                    <T>Your browser does not support the video tag.</T>
                   </video>
                 ) : (
                   <img
                     src={allMedia[currentImageIndex]}
-                    alt={`${project.title_en} - ${currentImageIndex + 1}`}
+                    alt={`${language === 'fr' ? (project.title_fr || project.title_en) : project.title_en} - ${currentImageIndex + 1}`}
                     className="w-full h-full object-contain"
                   />
                 )}
@@ -100,7 +103,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
           {/* Description */}
           <div className="space-y-4">
             <p className="text-lg text-white/90 leading-relaxed">
-              {project.description_en}
+              {language === 'fr' ? (project.description_fr || project.description_en) : project.description_en}
             </p>
           </div>
 
@@ -108,7 +111,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
           {project.technologies && project.technologies.length > 0 && (
             <div>
               <h3 className="text-xl font-bold text-cyan-400 mb-3" style={{ fontFamily: 'GT Pressura, sans-serif' }}>
-                Technologies
+                <T>Technologies</T>
               </h3>
               <div className="flex flex-wrap gap-2">
                 {project.technologies.map((tech, i) => (
@@ -130,7 +133,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold rounded-lg transition-all"
               >
                 <ExternalLink className="w-5 h-5" />
-                View Live Project
+                <T>View Live Project</T>
               </a>
             )}
             {project.github_url && (
@@ -141,7 +144,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                 className="flex items-center gap-2 px-6 py-3 bg-black/50 border-2 border-white/30 hover:border-white/60 text-white font-bold rounded-lg transition-all"
               >
                 <Github className="w-5 h-5" />
-                View Code
+                <T>View Code</T>
               </a>
             )}
           </div>

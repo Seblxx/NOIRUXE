@@ -6,7 +6,10 @@ import { TiltedCard } from '../components/TiltedCard';
 import { SimpleMenu } from '../components/SimpleMenu';
 import { Github, Linkedin, Mail, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
 import { useMenuItems } from '../hooks/useMenuItems';
+import * as skillsService from '../services/skillsService';
+import * as resumesService from '../services/resumesService';
 
 // Glitch text component
 const GlitchText = ({ text }: { text: string }) => {
@@ -114,17 +117,56 @@ export const About = () => {
   const title = language === 'fr' ? 'À PROPOS' : 'ABOUT';
   const subtitle = language === 'fr' ? 'Développeur Full-Stack' : 'Full-Stack Developer';
 
-  const content = language === 'fr' ? {
-    intro: "Je suis Sébastien Legagneur, un développeur Full-Stack passionné basé à Montréal, spécialisé dans la création d'applications web modernes et réactives avec des technologies de pointe.",
-    expertise: "Avec une expertise en React, TypeScript, Java Spring Boot et Python, je crée des expériences numériques fluides qui allient design élégant et fonctionnalité robuste. Je suis dédié à l'apprentissage continu et à rester à la pointe des tendances du développement web.",
-    experience: "J'ai de l'expérience de travail avec des équipes agiles, le développement de solutions full-stack, et la création d'interfaces utilisateur immersives avec des animations et des effets 3D."
-  } : {
-    intro: "I'm Sebastien Legagneur, a passionate Full-Stack Developer based in Montreal, specializing in building modern, responsive web applications with cutting-edge technologies.",
-    expertise: "With expertise in React, TypeScript, Java Spring Boot, and Python, I create seamless digital experiences that blend elegant design with robust functionality. I'm dedicated to continuous learning and staying at the forefront of web development trends.",
-    experience: "I have experience working with agile teams, developing full-stack solutions, and creating immersive user interfaces with animations and 3D effects."
+  const content = {
+    intro: language === 'fr'
+      ? "Je suis Sebastien Legagneur, un développeur Full-Stack passionné basé à Montréal, spécialisé dans la création d'applications web modernes et responsive avec des technologies de pointe."
+      : "I'm Sebastien Legagneur, a passionate Full-Stack Developer based in Montreal, specializing in building modern, responsive web applications with cutting-edge technologies.",
+    expertise: language === 'fr'
+      ? "Avec une expertise en React, TypeScript, Java Spring Boot et Python, je crée des expériences numériques fluides qui allient design élégant et fonctionnalité robuste. Je suis dédié à l'apprentissage continu et à rester à la pointe du développement web."
+      : "With expertise in React, TypeScript, Java Spring Boot, and Python, I create seamless digital experiences that blend elegant design with robust functionality. I'm dedicated to continuous learning and staying at the forefront of web development trends.",
+    experience: language === 'fr'
+      ? "J'ai de l'expérience dans le travail avec des équipes agiles, le développement de solutions full-stack et la création d'interfaces utilisateur immersives avec des animations et des effets 3D."
+      : "I have experience working with agile teams, developing full-stack solutions, and creating immersive user interfaces with animations and 3D effects."
   };
 
-  const technologies = ['React', 'TypeScript', 'Java', 'Spring Boot', 'Python', 'PostgreSQL', 'Docker', 'Tailwind CSS'];
+  // Fetch skills from API for the technologies display
+  const [technologies, setTechnologies] = useState<string[]>([]);
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+  const [resumeFileName, setResumeFileName] = useState<string>('CV.pdf');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch skills categories as technologies
+      try {
+        const skills = await skillsService.getSkills();
+        const categories = [...new Set(skills.map(s => s.category))];
+        if (categories.length > 0) {
+          setTechnologies(categories);
+        }
+      } catch {
+        // Fallback stays empty
+      }
+
+      // Fetch active resume for CV download
+      try {
+        const resume = await resumesService.getActiveResume(language as 'en' | 'fr');
+        setResumeUrl(resume.file_url);
+        setResumeFileName(resume.file_name || 'CV.pdf');
+      } catch {
+        try {
+          const fallbackLang = language === 'en' ? 'fr' : 'en';
+          const resume = await resumesService.getActiveResume(fallbackLang as 'en' | 'fr');
+          setResumeUrl(resume.file_url);
+          setResumeFileName(resume.file_name || 'CV.pdf');
+        } catch {
+          // Final fallback to static file
+          setResumeUrl('/Media/FINAL CV III.pdf');
+          setResumeFileName('Sebastien_Legagneur_CV.pdf');
+        }
+      }
+    };
+    fetchData();
+  }, [language]);
 
   const socialLinks = [
     { icon: Github, href: 'https://github.com/Seblxx', label: 'GitHub' },
@@ -133,10 +175,10 @@ export const About = () => {
   ];
 
   const handleDownloadCV = () => {
-    const cvPath = '/Media/FINAL CV III.pdf';
+    if (!resumeUrl) return;
     const link = document.createElement('a');
-    link.href = cvPath;
-    link.download = 'Sebastien_Legagneur_CV.pdf';
+    link.href = resumeUrl;
+    link.download = resumeFileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -187,7 +229,7 @@ export const About = () => {
               className="mt-4 text-xl tracking-widest uppercase"
               style={{ fontFamily: "'GT Pressura', sans-serif", color: '#ffffff' }}
             >
-              {subtitle}
+              <T>{subtitle}</T>
             </p>
           </motion.div>
 
@@ -198,10 +240,30 @@ export const About = () => {
             transition={{ delay: 0.2 }}
             className="text-white/70 leading-relaxed text-xl md:text-2xl space-y-4"
           >
-            <p>{content.intro}</p>
-            <p>{content.expertise}</p>
-            <p>{content.experience}</p>
+            <p><T>{content.intro}</T></p>
+            <p><T>{content.expertise}</T></p>
+            <p><T>{content.experience}</T></p>
           </motion.div>
+
+          {/* Technologies */}
+          {technologies.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="flex flex-wrap justify-center gap-3 mt-10"
+            >
+              {technologies.map((tech, i) => (
+                <span
+                  key={i}
+                  className="px-4 py-1.5 rounded-full border border-white/20 bg-white/5 text-white/70 text-sm tracking-wider uppercase"
+                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                >
+                  {tech}
+                </span>
+              ))}
+            </motion.div>
+          )}
 
           {/* Download CV Button */}
           <motion.div
@@ -219,7 +281,7 @@ export const About = () => {
             >
               <Download size={22} className="group-hover:scale-110 transition-transform" />
               <span className="text-lg tracking-widest uppercase font-bold">
-                {language === 'fr' ? 'Télécharger CV' : 'Download CV'}
+                <T>Download CV</T>
               </span>
             </motion.button>
           </motion.div>

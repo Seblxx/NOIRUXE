@@ -56,5 +56,11 @@
     server: {
       port: 5173,
       open: true,
+      proxy: {
+        '/uploads': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+      },
     },
   });

@@ -32,6 +32,7 @@ class ProjectBase(BaseModel):
     short_description_en: Optional[str] = None
     short_description_fr: Optional[str] = None
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     gallery_urls: Optional[List[str]] = None
     project_url: Optional[str] = None
     github_url: Optional[str] = None

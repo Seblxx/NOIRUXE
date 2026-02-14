@@ -48,3 +48,11 @@ lerna-debug.log*
 Thumbs.db
 .DS_Store
 
+# Database
+*.db
+portfolio-backend/database/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

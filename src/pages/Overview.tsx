@@ -25,6 +25,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { T } from '../components/Translate';
 import * as skillsService from '../services/skillsService';
 import * as workExperienceService from '../services/workExperienceService';
 import * as educationService from '../services/educationService';
@@ -206,7 +207,11 @@ export const Overview = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    if (!dateStr) return '—';
+    // Parse as local date (not UTC) to avoid timezone offset shifting the day
+    const parts = dateStr.split('T')[0].split('-');
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]) || 1);
+    if (isNaN(date.getTime())) return '—';
     return date.toLocaleDateString(language === 'fr' ? 'fr-CA' : 'en-CA', { 
       year: 'numeric', 
       month: 'short' 
@@ -269,11 +274,11 @@ export const Overview = () => {
             
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-sm">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : categories.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-base">
-                {language === 'fr' ? 'Aucune compétence' : 'No skills'}
+                <T>No skills</T>
               </div>
             ) : (
               <div className="flex-1 flex items-center gap-3">
@@ -300,12 +305,12 @@ export const Overview = () => {
                               color: categoryColors[currentCat[0]] || sectionColors.skills.primary
                             }}
                           >
-                            {currentCat[0]}
+                            <T>{currentCat[0]}</T>
                           </h3>
                           <p className="text-white/60 text-base md:text-lg leading-relaxed">
                             {currentCat[1].map((skill, i) => (
                               <span key={skill.id}>
-                                {language === 'fr' ? skill.name_fr : skill.name_en}
+                                {language === 'fr' ? (skill.name_fr || skill.name_en) : skill.name_en}
                                 {i < currentCat[1].length - 1 && ', '}
                               </span>
                             ))}
@@ -343,11 +348,11 @@ export const Overview = () => {
             
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-sm">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : experiences.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-base">
-                {language === 'fr' ? 'Aucune expérience' : 'No experience'}
+                <T>No experience</T>
               </div>
             ) : (
               <div className="flex-1 flex items-center gap-3">
@@ -371,26 +376,28 @@ export const Overview = () => {
                             className="text-xl md:text-2xl font-bold text-white"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
                           >
-                            {language === 'fr' ? currentExp.position_fr : currentExp.position_en}
+                            {language === 'fr' ? (currentExp.position_fr || currentExp.position_en) : currentExp.position_en}
                           </h3>
                           <p 
                             className="font-semibold text-base md:text-lg"
                             style={{ color: sectionColors.experience.primary }}
                           >
-                            {currentExp.company_name}
+                            {language === 'fr' && currentExp.company_name === 'Self Employed'
+                              ? 'Travailleur Autonome'
+                              : <T>{currentExp.company_name}</T>}
                           </p>
                           
                           <div className="flex items-center justify-center gap-2 text-white/40 text-sm md:text-base">
                             <Calendar size={16} />
                             <span>
                               {formatDate(currentExp.start_date)} — {currentExp.is_current 
-                                ? (language === 'fr' ? 'Présent' : 'Present') 
-                                : formatDate(currentExp.end_date || '')}
+                                ? (language === 'fr' ? 'Présent' : 'Present')
+                                : currentExp.end_date ? formatDate(currentExp.end_date) : '—'}
                             </span>
                           </div>
 
                           <p className="text-white/60 text-base md:text-lg leading-relaxed line-clamp-4 max-w-lg mx-auto">
-                            {language === 'fr' ? currentExp.description_fr : currentExp.description_en}
+                            {language === 'fr' ? (currentExp.description_fr || currentExp.description_en) : currentExp.description_en}
                           </p>
                         </div>
                       )}
@@ -424,11 +431,11 @@ export const Overview = () => {
             
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-sm">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : education.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-base">
-                {language === 'fr' ? 'Aucune éducation' : 'No education'}
+                <T>No education</T>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar flex items-center justify-center">
@@ -439,7 +446,7 @@ export const Overview = () => {
                         className="text-xl md:text-2xl font-bold text-white leading-tight"
                         style={{ fontFamily: "'GT Pressura', sans-serif" }}
                       >
-                        {language === 'fr' ? edu.degree_fr : edu.degree_en}
+                        {language === 'fr' ? (edu.degree_fr || edu.degree_en) : edu.degree_en}
                       </h3>
                       <p 
                         className="font-semibold text-base md:text-lg mt-1"
@@ -449,28 +456,30 @@ export const Overview = () => {
                       </p>
                       {(edu.field_of_study_en || edu.field_of_study_fr) && (
                         <p className="text-white/50 text-base md:text-lg mt-0.5">
-                          {language === 'fr' ? edu.field_of_study_fr : edu.field_of_study_en}
+                          {language === 'fr' ? (edu.field_of_study_fr || edu.field_of_study_en) : edu.field_of_study_en}
                         </p>
                       )}
-                      <div className="flex items-center justify-center gap-1.5 text-white/40 text-base md:text-lg mt-1.5">
-                        <Calendar size={12} />
-                        <span>
-                          {formatDate(edu.start_date)} — {edu.is_current 
-                            ? (language === 'fr' ? 'Présent' : 'Present') 
-                            : formatDate(edu.end_date || '')}
-                        </span>
-                        {edu.grade && (
-                          <span 
-                            className="ml-1 px-1.5 py-0.5 rounded text-xs"
-                            style={{ 
-                              backgroundColor: `${sectionColors.education.primary}20`,
-                              color: sectionColors.education.primary 
-                            }}
-                          >
-                            GPA: {edu.grade}
+                      {edu.start_date && (
+                        <div className="flex items-center justify-center gap-2 text-white/60 text-sm md:text-base mt-2">
+                          <Calendar size={16} />
+                          <span>
+                            {formatDate(edu.start_date)} — {edu.is_current 
+                              ? (language === 'fr' ? 'Présent' : 'Present')
+                              : edu.end_date ? formatDate(edu.end_date) : '—'}
                           </span>
-                        )}
-                      </div>
+                          {edu.grade && (
+                            <span 
+                              className="ml-1 px-1.5 py-0.5 rounded text-xs"
+                              style={{ 
+                                backgroundColor: `${sectionColors.education.primary}20`,
+                                color: sectionColors.education.primary 
+                              }}
+                            >
+                              <T>GPA</T>: {edu.grade}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {idx < education.length - 1 && (
                         <div className="mt-4 mx-auto w-16 h-px bg-white/10" />
                       )}
@@ -501,11 +510,11 @@ export const Overview = () => {
             
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-sm">
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                <T>Loading...</T>
               </div>
             ) : hobbies.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-white/30 text-base">
-                {language === 'fr' ? 'Aucun loisir' : 'No hobbies'}
+                <T>No hobbies</T>
               </div>
             ) : (
               <div className="flex-1 flex items-center gap-3">
@@ -541,11 +550,11 @@ export const Overview = () => {
                             className="text-xl md:text-2xl font-bold text-white mb-2"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
                           >
-                            {language === 'fr' ? currentHobby.name_fr : currentHobby.name_en}
+                            {language === 'fr' ? (currentHobby.name_fr || currentHobby.name_en) : currentHobby.name_en}
                           </h3>
 
                           <p className="text-white/60 text-base md:text-lg line-clamp-3 max-w-lg mx-auto">
-                            {language === 'fr' ? currentHobby.description_fr : currentHobby.description_en}
+                            {language === 'fr' ? (currentHobby.description_fr || currentHobby.description_en) : currentHobby.description_en}
                           </p>
                         </>
                       )}

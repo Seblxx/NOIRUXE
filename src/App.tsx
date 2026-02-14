@@ -148,7 +148,7 @@ export default function App() {
           className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/50 tracking-[0.3em] z-20 pointer-events-none"
           style={{ fontFamily: 'GT Pressura, sans-serif', textTransform: 'uppercase' }}
         >
-          Explore
+          {t('home.explore', 'Explore', 'Explorer')}
         </motion.div>
       </section>
     </div>
