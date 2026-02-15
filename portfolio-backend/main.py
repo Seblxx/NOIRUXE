@@ -27,6 +27,7 @@ cors_origins = [
     "http://localhost:5174",
     "http://localhost:3000",
     "http://localhost:4200",
+    "https://*.vercel.app",  # Allow all Vercel preview deployments
 ]
 
 # Add production frontend URL from environment variable
