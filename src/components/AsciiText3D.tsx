@@ -525,7 +525,8 @@ export function AsciiText3D({
       style={{
         position: 'absolute',
         width: '100%',
-        height: '100%'
+        height: '100%',
+        pointerEvents: 'none',
       }}
     >
       <style>{`
@@ -537,6 +538,7 @@ export function AsciiText3D({
           top: 0;
           width: 100%;
           height: 100%;
+          pointer-events: none;
           image-rendering: optimizeSpeed;
           image-rendering: -moz-crisp-edges;
           image-rendering: -o-crisp-edges;
@@ -555,6 +557,7 @@ export function AsciiText3D({
           position: absolute;
           left: 0;
           top: 0;
+          pointer-events: none;
           background-image: radial-gradient(circle, #ff6188 0%, #fc9867 50%, #ffd866 100%);
           background-attachment: fixed;
           -webkit-text-fill-color: transparent;

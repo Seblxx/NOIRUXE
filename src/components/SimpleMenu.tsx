@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Globe } from 'lucide-react';
+import { Globe, Menu, X } from 'lucide-react';
 
 interface MenuItem {
   label: string;
@@ -15,11 +16,21 @@ interface SimpleMenuProps {
 
 export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const [isMobile, setIsMobile] = useState(false);
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'fr' : 'en');
   };
+
+  // Detect mobile (matches CSS breakpoint)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Handle spacebar to toggle menu
   useEffect(() => {
@@ -40,8 +51,106 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
 
   return (
     <>
+      {/* ===== MOBILE HAMBURGER MENU — portaled to document.body to escape all stacking contexts ===== */}
+      {isMobile && createPortal(
+        <>
+          {/* Hamburger button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMobileMenuOpen(prev => !prev);
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMobileMenuOpen(prev => !prev);
+            }}
+            style={{
+              position: 'fixed',
+              bottom: '1.5rem',
+              left: '1.5rem',
+              zIndex: 2147483647,
+              color: 'white',
+              padding: isExpanded ? '1rem' : '0.75rem',
+              background: isExpanded ? 'transparent' : 'rgba(0,0,0,0.9)',
+              borderRadius: isExpanded ? 0 : '0.5rem',
+              border: 'none',
+              cursor: 'pointer',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              fontFamily: 'GT Pressura, sans-serif',
+              pointerEvents: 'auto',
+            }}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {mobileMenuOpen ? <X size={isExpanded ? 32 : 24} /> : <Menu size={isExpanded ? 32 : 24} />}
+          </button>
+
+          {/* Fullscreen overlay menu */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 2147483646,
+                  backgroundColor: 'black',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'auto',
+                }}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  {items.map((item, idx) => (
+                    <motion.button
+                      key={idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ delay: idx * 0.05, duration: 0.25 }}
+                      onClick={() => {
+                        item.onClick();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-white uppercase tracking-[0.25em] text-3xl py-4 px-6 hover:text-cyan-400 transition-colors"
+                      style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
+                    >
+                      {item.label}
+                    </motion.button>
+                  ))}
+
+                  {/* Language toggle */}
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ delay: items.length * 0.05, duration: 0.25 }}
+                    onClick={toggleLanguage}
+                    className="mt-6 flex items-center gap-2 text-white/50 uppercase tracking-[0.25em] text-lg py-4 px-6 hover:text-cyan-400 transition-colors"
+                    style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
+                  >
+                    <Globe size={16} />
+                    <span>{language === 'en' ? 'Français' : 'English'}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>,
+        document.body
+      )}
+
+      {/* ===== DESKTOP MENUS — only render on desktop ===== */}
       {/* Bottom Menu - Only visible on home screen */}
-      {isExpanded && (
+      {!isMobile && isExpanded && (
         <div className="fixed bottom-8 left-8 z-50">
           <AnimatePresence mode="wait">
             {menuOpen ? (
@@ -117,7 +226,7 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
       )}
 
       {/* Left Sidebar Menu - Visible after scrolling past home */}
-      {!isExpanded && (
+      {!isMobile && !isExpanded && (
         <motion.div
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}

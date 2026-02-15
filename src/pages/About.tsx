@@ -8,7 +8,6 @@ import { Github, Linkedin, Mail, Download } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { T } from '../components/Translate';
 import { useMenuItems } from '../hooks/useMenuItems';
-import * as skillsService from '../services/skillsService';
 import * as resumesService from '../services/resumesService';
 
 // Glitch text component
@@ -129,24 +128,12 @@ export const About = () => {
       : "I have experience working with agile teams, developing full-stack solutions, and creating immersive user interfaces with animations and 3D effects."
   };
 
-  // Fetch skills from API for the technologies display
-  const [technologies, setTechnologies] = useState<string[]>([]);
+  // Fetch resume for CV download
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [resumeFileName, setResumeFileName] = useState<string>('CV.pdf');
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch skills categories as technologies
-      try {
-        const skills = await skillsService.getSkills();
-        const categories = [...new Set(skills.map(s => s.category))];
-        if (categories.length > 0) {
-          setTechnologies(categories);
-        }
-      } catch {
-        // Fallback stays empty
-      }
-
       // Fetch active resume for CV download
       try {
         const resume = await resumesService.getActiveResume(language as 'en' | 'fr');
@@ -169,9 +156,9 @@ export const About = () => {
   }, [language]);
 
   const socialLinks = [
-    { icon: Github, href: 'https://github.com/Seblxx', label: 'GitHub' },
-    { icon: Linkedin, href: 'https://linkedin.com/in/sebastien-legagneur', label: 'LinkedIn' },
-    { icon: Mail, href: 'mailto:sebmoleg@gmail.com', label: 'Email' },
+    { icon: Github, href: 'https://github.com/Seblxx', label: 'GitHub', external: true },
+    { icon: Linkedin, href: 'https://linkedin.com/in/sebastien-legagneur', label: 'LinkedIn', external: true },
+    { icon: Mail, href: '/contact', label: 'Contact', external: false },
   ];
 
   const handleDownloadCV = () => {
@@ -245,26 +232,6 @@ export const About = () => {
             <p><T>{content.experience}</T></p>
           </motion.div>
 
-          {/* Technologies */}
-          {technologies.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="flex flex-wrap justify-center gap-3 mt-10"
-            >
-              {technologies.map((tech, i) => (
-                <span
-                  key={i}
-                  className="px-4 py-1.5 rounded-full border border-white/20 bg-white/5 text-white/70 text-sm tracking-wider uppercase"
-                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                >
-                  {tech}
-                </span>
-              ))}
-            </motion.div>
-          )}
-
           {/* Download CV Button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -294,19 +261,33 @@ export const About = () => {
             className="flex justify-center gap-6 mt-12"
           >
             {socialLinks.map((social, index) => (
-              <motion.a
-                key={social.label}
-                href={social.href}
-                target={social.href.startsWith('mailto') ? undefined : '_blank'}
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 + index * 0.1 }}
-                whileHover={{ scale: 1.1, y: -2 }}
-                className="p-3 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-cyan-400 hover:border-cyan-500/30 transition-all"
-              >
-                <social.icon size={22} />
-              </motion.a>
+              social.external ? (
+                <motion.a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 + index * 0.1 }}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  className="p-3 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-cyan-400 hover:border-cyan-500/30 transition-all"
+                >
+                  <social.icon size={22} />
+                </motion.a>
+              ) : (
+                <motion.button
+                  key={social.label}
+                  onClick={() => navigate(social.href)}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 + index * 0.1 }}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  className="p-3 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-cyan-400 hover:border-cyan-500/30 transition-all"
+                >
+                  <social.icon size={22} />
+                </motion.button>
+              )
             ))}
           </motion.div>
         </div>

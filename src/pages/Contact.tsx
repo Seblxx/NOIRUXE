@@ -218,12 +218,6 @@ export const Contact = () => {
             >
               <GlitchText text={language === 'fr' ? 'CONTACT' : 'CONTACT'} />
             </h1>
-            <p 
-              className="mt-4 text-white/40 text-sm tracking-widest uppercase"
-              style={{ fontFamily: "'GT Pressura', sans-serif" }}
-            >
-              <T>Let's connect</T>
-            </p>
           </motion.div>
 
           {/* Social Links */}

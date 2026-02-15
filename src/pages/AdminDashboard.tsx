@@ -267,6 +267,17 @@ export const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('skills');
+  const [mobileTabsOpen, setMobileTabsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileActionMode, setMobileActionMode] = useState<'none' | 'edit' | 'delete'>('none');
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Data
   const [skills, setSkills] = useState<skillsService.Skill[]>([]);
@@ -854,45 +865,143 @@ export const AdminDashboard = () => {
             </p>
           </motion.div>
 
-          {/* Tabs */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap justify-center gap-3 mb-10"
-          >
-            <SectionButton active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} icon={Zap} label={t('admin.skills', 'Skills', 'Compétences')} />
-            <SectionButton active={activeTab === 'projects'} onClick={() => setActiveTab('projects')} icon={FolderOpen} label={t('admin.projects', 'Projects', 'Projets')} />
-            <SectionButton active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} icon={Briefcase} label={t('admin.experience', 'Experience', 'Expérience')} />
-            <SectionButton active={activeTab === 'education'} onClick={() => setActiveTab('education')} icon={GraduationCap} label={t('admin.education', 'Education', 'Éducation')} />
-            <SectionButton active={activeTab === 'hobbies'} onClick={() => setActiveTab('hobbies')} icon={Gamepad2} label={t('admin.hobbies', 'Hobbies', 'Loisirs')} />
-            <SectionButton active={activeTab === 'testimonials'} onClick={() => setActiveTab('testimonials')} icon={Star} label={t('admin.testimonials', 'Testimonials', 'Témoignages')} />
-            <SectionButton active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon={MessageSquare} label={t('admin.messages', 'Messages', 'Messages')} />
-          </motion.div>
-
-          {/* Add button */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="w-full max-w-5xl flex justify-end mb-5"
-          >
-            {activeTab !== 'messages' && (
-              <button
-                onClick={openAdd}
-                className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm tracking-wider uppercase transition-all"
+          {/* Tabs — Desktop: normal buttons, Mobile: dropdown */}
+          {!isMobile ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-wrap justify-center gap-3 mb-10"
+            >
+              <SectionButton active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} icon={Zap} label={t('admin.skills', 'Skills', 'Compétences')} />
+              <SectionButton active={activeTab === 'projects'} onClick={() => setActiveTab('projects')} icon={FolderOpen} label={t('admin.projects', 'Projects', 'Projets')} />
+              <SectionButton active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} icon={Briefcase} label={t('admin.experience', 'Experience', 'Expérience')} />
+              <SectionButton active={activeTab === 'education'} onClick={() => setActiveTab('education')} icon={GraduationCap} label={t('admin.education', 'Education', 'Éducation')} />
+              <SectionButton active={activeTab === 'hobbies'} onClick={() => setActiveTab('hobbies')} icon={Gamepad2} label={t('admin.hobbies', 'Hobbies', 'Loisirs')} />
+              <SectionButton active={activeTab === 'testimonials'} onClick={() => setActiveTab('testimonials')} icon={Star} label={t('admin.testimonials', 'Testimonials', 'Témoignages')} />
+              <SectionButton active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon={MessageSquare} label={t('admin.messages', 'Messages', 'Messages')} />
+            </motion.div>
+          ) : (
+            <>
+              {/* Mobile tab toggle button */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                onClick={() => setMobileTabsOpen(true)}
+                className="mb-10 flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm tracking-wider uppercase border"
                 style={{
                   ...font,
                   backgroundColor: 'rgba(0,255,255,0.1)',
-                  border: '1px solid rgba(0,255,255,0.4)',
+                  borderColor: 'rgba(0,255,255,0.4)',
                   color: '#22d3ee',
                 }}
               >
-                <Plus size={18} />
-                <T>{`Add ${activeTab === 'skills' ? 'Skill' : activeTab === 'experience' ? 'Experience' : activeTab === 'projects' ? 'Project' : activeTab === 'education' ? 'Education' : activeTab === 'resumes' ? 'Resume' : activeTab === 'testimonials' ? 'Testimonial' : 'Hobby'}`}</T>
-              </button>
-            )}
-          </motion.div>
+                <span>{activeTab}</span>
+                <ChevronDown size={18} />
+              </motion.button>
+
+              {/* Fullscreen staggered menu - portaled to body */}
+              {createPortal(
+                <AnimatePresence>
+                  {mobileTabsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 2147483646,
+                        backgroundColor: 'black',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        pointerEvents: 'auto',
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        {/* Home button first */}
+                        <motion.button
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          transition={{ delay: 0, duration: 0.25 }}
+                          onClick={() => {
+                            navigate('/');
+                            setMobileTabsOpen(false);
+                          }}
+                          className="flex items-center gap-3 text-white uppercase tracking-[0.25em] text-2xl py-4 px-6 hover:text-cyan-400 transition-colors"
+                          style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
+                        >
+                          <ArrowLeft size={28} />
+                          <span><T>Home</T></span>
+                        </motion.button>
+                        
+                        {([
+                          { key: 'skills' as Tab, icon: Zap, label: t('admin.skills', 'Skills', 'Compétences') },
+                          { key: 'projects' as Tab, icon: FolderOpen, label: t('admin.projects', 'Projects', 'Projets') },
+                          { key: 'experience' as Tab, icon: Briefcase, label: t('admin.experience', 'Experience', 'Expérience') },
+                          { key: 'education' as Tab, icon: GraduationCap, label: t('admin.education', 'Education', 'Éducation') },
+                          { key: 'hobbies' as Tab, icon: Gamepad2, label: t('admin.hobbies', 'Hobbies', 'Loisirs') },
+                          { key: 'resumes' as Tab, icon: FileText, label: t('admin.resumes', 'Resumes', 'CVs') },
+                          { key: 'testimonials' as Tab, icon: Star, label: t('admin.testimonials', 'Testimonials', 'Témoignages') },
+                          { key: 'messages' as Tab, icon: MessageSquare, label: t('admin.messages', 'Messages', 'Messages') },
+                        ]).map((tab, idx) => (
+                          <motion.button
+                            key={tab.key}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ delay: (idx + 1) * 0.05, duration: 0.25 }}
+                            onClick={() => {
+                              setActiveTab(tab.key);
+                              setMobileTabsOpen(false);
+                              setMobileActionMode('none');
+                            }}
+                            className="flex items-center gap-3 text-white uppercase tracking-[0.25em] text-2xl py-4 px-6 hover:text-cyan-400 transition-colors"
+                            style={{ fontFamily: 'GT Pressura, sans-serif', fontWeight: 700 }}
+                          >
+                            <tab.icon size={28} />
+                            <span>{tab.label}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>,
+                document.body
+              )}
+            </>
+          )}
+
+          {/* Add button - desktop only */}
+          {!isMobile && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="w-full max-w-5xl flex justify-end mb-5"
+            >
+              {activeTab !== 'messages' && (
+                <button
+                  onClick={openAdd}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm tracking-wider uppercase transition-all"
+                  style={{
+                    ...font,
+                    backgroundColor: 'rgba(0,255,255,0.1)',
+                    border: '1px solid rgba(0,255,255,0.4)',
+                    color: '#22d3ee',
+                  }}
+                >
+                  <Plus size={18} />
+                  <T>{`Add ${activeTab === 'skills' ? 'Skill' : activeTab === 'experience' ? 'Experience' : activeTab === 'projects' ? 'Project' : activeTab === 'education' ? 'Education' : activeTab === 'resumes' ? 'Resume' : activeTab === 'testimonials' ? 'Testimonial' : 'Hobby'}`}</T>
+                </button>
+              )}
+            </motion.div>
+          )}
 
           {/* Table */}
           <motion.div
@@ -908,6 +1017,143 @@ export const AdminDashboard = () => {
             ) : currentItems.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-white/50 text-lg" style={font}><T>{`No ${activeTab} yet. Click "Add" to create one.`}</T></p>
+              </div>
+            ) : isMobile ? (
+              // Mobile: Action-first interface
+              <div className="bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 p-6">
+                {mobileActionMode === 'none' ? (
+                  // Show action buttons
+                  <div className="flex flex-col gap-4">
+                    {activeTab !== 'messages' && (
+                      <button
+                        onClick={() => openAdd()}
+                        className="flex items-center justify-center gap-3 px-6 py-4 rounded-lg text-lg tracking-wider uppercase transition-all border"
+                        style={{
+                          ...font,
+                          backgroundColor: 'rgba(0,255,255,0.1)',
+                          borderColor: 'rgba(0,255,255,0.4)',
+                          color: '#22d3ee',
+                        }}
+                      >
+                        <Plus size={24} />
+                        <span>
+                          <T>{activeTab === 'skills' ? 'Add Skill' : activeTab === 'experience' ? 'Add Experience' : activeTab === 'projects' ? 'Add Project' : activeTab === 'education' ? 'Add Education' : activeTab === 'resumes' ? 'Add Resume' : activeTab === 'testimonials' ? 'Add Testimonial' : 'Add Hobby'}</T>
+                        </span>
+                      </button>
+                    )}
+                    
+                    {currentItems.length > 0 && (
+                      <>
+                        <button
+                          onClick={() => setMobileActionMode('edit')}
+                          className="flex items-center justify-center gap-3 px-6 py-4 rounded-lg text-lg tracking-wider uppercase transition-all border"
+                          style={{
+                            ...font,
+                            backgroundColor: 'rgba(0,255,255,0.08)',
+                            borderColor: 'rgba(0,255,255,0.2)',
+                            color: '#22d3ee',
+                          }}
+                        >
+                          <Pencil size={24} />
+                          <span><T>Edit Item</T></span>
+                        </button>
+                        
+                        <button
+                          onClick={() => setMobileActionMode('delete')}
+                          className="flex items-center justify-center gap-3 px-6 py-4 rounded-lg text-lg tracking-wider uppercase transition-all border"
+                          style={{
+                            ...font,
+                            backgroundColor: 'rgba(248,113,113,0.08)',
+                            borderColor: 'rgba(248,113,113,0.2)',
+                            color: '#f87171',
+                          }}
+                        >
+                          <Trash2 size={24} />
+                          <span><T>Delete Item</T></span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  // Show item selection list
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg tracking-wider uppercase" style={{ ...font, color: '#22d3ee' }}>
+                        <T>{mobileActionMode === 'edit' ? 'Select item to edit' : 'Select item to delete'}</T>
+                      </h3>
+                      <button
+                        onClick={() => setMobileActionMode('none')}
+                        className="p-2 rounded-lg transition-all"
+                        style={{ color: 'rgba(255,255,255,0.6)' }}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
+                      {currentItems.map((item: any) => {
+                        // Get display text based on tab type
+                        let displayText = '';
+                        switch (activeTab) {
+                          case 'skills':
+                            displayText = language === 'fr' ? (item.name_fr || item.name_en) : (item.name_en || item.name_fr);
+                            break;
+                          case 'projects':
+                            displayText = language === 'fr' ? (item.title_fr || item.title_en) : (item.title_en || item.title_fr);
+                            break;
+                          case 'experience':
+                            displayText = `${item.company_name} - ${language === 'fr' ? (item.position_fr || item.position_en) : (item.position_en || item.position_fr)}`;
+                            break;
+                          case 'education':
+                            displayText = `${item.institution_name} - ${language === 'fr' ? (item.degree_fr || item.degree_en) : (item.degree_en || item.degree_fr)}`;
+                            break;
+                          case 'hobbies':
+                            displayText = language === 'fr' ? (item.name_fr || item.name_en) : (item.name_en || item.name_fr);
+                            break;
+                          case 'resumes':
+                            displayText = `${language === 'fr' ? (item.title_fr || item.title_en) : (item.title_en || item.title_fr)} (${item.language.toUpperCase()})`;
+                            break;
+                          case 'messages':
+                            displayText = `${item.name} - ${item.subject || item.message?.substring(0, 40) + '...'}`;
+                            break;
+                          case 'testimonials':
+                            displayText = `${item.author_name} - ${(item.testimonial_text_en || '').substring(0, 40)}...`;
+                            break;
+                          default:
+                            displayText = item.id;
+                        }
+                        
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => {
+                              if (mobileActionMode === 'edit') {
+                                openEdit(item);
+                              } else {
+                                setDeleteId(item.id);
+                              }
+                              setMobileActionMode('none');
+                            }}
+                            className="flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all border"
+                            style={{
+                              ...font,
+                              backgroundColor: 'rgba(255,255,255,0.03)',
+                              borderColor: 'rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.9)',
+                            }}
+                          >
+                            <span className="text-sm truncate">{displayText}</span>
+                            {mobileActionMode === 'edit' ? (
+                              <Pencil size={18} style={{ color: '#22d3ee' }} />
+                            ) : (
+                              <Trash2 size={18} style={{ color: '#f87171' }} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 overflow-hidden">

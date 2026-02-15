@@ -644,3 +644,350 @@ textarea {
 .pixel-card:hover::before {
   opacity: 0.3;
 }
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS — CSS-only overrides, desktop layout untouched.
+   Breakpoint: 1024px — anything below full desktop width gets mobile view.
+   ========================================================================== */
+
+/* Hide custom cursor on touch devices */
+@media (pointer: coarse) {
+  body,
+  body * {
+    cursor: auto !important;
+  }
+  .fixed.w-2.h-2.bg-white.rounded-full.pointer-events-none {
+    display: none !important;
+  }
+  /* Ensure all buttons are tappable */
+  button {
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+/* ---- Mobile view (max-width: 1024px) ---- */
+@media (max-width: 1024px) {
+
+  /* --- LANGUAGE SWITCHER: bring in from edge --- */
+  .fixed.top-8.right-8 {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  /* --- BACK BUTTONS on all inner pages --- */
+  .fixed.top-8.left-8 {
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+
+  /* --- "EXPLORE" text at bottom --- */
+  .absolute.bottom-12 {
+    bottom: 2rem;
+    font-size: 0.75rem;
+  }
+
+  /* --- PAGE TITLES --- */
+  h1[class*="text-8xl"] {
+    font-size: 2rem !important;
+    line-height: 1.1 !important;
+  }
+
+  h1[class*="text-7xl"] {
+    font-size: 1.8rem !important;
+    line-height: 1.1 !important;
+  }
+
+  h1[class*="text-6xl"] {
+    font-size: 1.6rem !important;
+    line-height: 1.1 !important;
+  }
+
+  h1[class*="text-5xl"] {
+    font-size: 1.4rem !important;
+    line-height: 1.1 !important;
+  }
+
+  /* --- MARQUEE BACKGROUND TEXT --- */
+  div[style*="animation: marquee"] span,
+  div[style*="animation: authMarquee"] span {
+    font-size: clamp(2.5rem, 10vw, 8rem) !important;
+  }
+
+  /* --- CARD CONTAINERS (Login, Contact, Education, Hobbies, Signup) --- */
+  .rounded-2xl[class*="p-12"],
+  .rounded-2xl[class*="p-10"] {
+    padding: 1.5rem !important;
+  }
+
+  .rounded-2xl[class*="p-8"] {
+    padding: 1.25rem !important;
+  }
+
+  /* --- ABOUT PAGE --- */
+  /* Wrap content in a card-like style and constrain width */
+  .min-h-screen.bg-black .max-w-2xl {
+    max-width: 90vw;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+  }
+
+  /* About text sizing */
+  .min-h-screen.bg-black .max-w-2xl .text-xl.md\:text-2xl,
+  .min-h-screen.bg-black .max-w-2xl .text-xl {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+  }
+
+  /* About subtitle */
+  .min-h-screen.bg-black .max-w-2xl .text-xl.tracking-widest {
+    font-size: 0.8rem !important;
+  }
+
+  /* About tech chips: tighter */
+  .min-h-screen.bg-black .max-w-2xl .flex-wrap.gap-3 {
+    gap: 0.4rem;
+  }
+
+  .min-h-screen.bg-black .max-w-2xl .flex-wrap.gap-3 span {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  /* About CV button */
+  .min-h-screen.bg-black .max-w-2xl button.px-8 {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+  }
+
+  /* About social links */
+  .min-h-screen.bg-black .max-w-2xl .gap-6 {
+    gap: 0.75rem;
+  }
+
+  /* --- PROJECTS PAGE --- */
+  /* Fixed-width image container (520px / 293px) — make fluid */
+  div[style*="width: 520px"],
+  div[style*="width: '520px'"],
+  div[style*="width:'520px'"] {
+    width: calc(100vw - 6rem) !important;
+    max-width: 520px !important;
+  }
+
+  div[style*="height: 293px"],
+  div[style*="height: '293px'"],
+  div[style*="height:'293px'"] {
+    height: auto !important;
+    aspect-ratio: 520 / 293;
+  }
+
+  /* Projects page image: ensure images fill the container */
+  div[style*="width: 520px"] img,
+  div[style*="width: '520px'"] img,
+  div[style*="width:'520px'"] img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* Projects: h-screen containers — allow content to breathe */
+  .min-h-screen.h-screen {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Project title arrows: smaller */
+  .flex.items-center.gap-5 .p-2 svg[class*="text-white"] {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* --- TESTIMONIALS PAGE --- */
+  .h-screen.bg-black.relative.overflow-hidden {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .h-screen .px-8,
+  .min-h-screen .px-8 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .grid.grid-cols-1.md\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* --- OVERVIEW PAGE (2×2 grid) --- */
+  div[style*="gridTemplateColumns: '1fr 1fr'"],
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .h-screen.w-screen.bg-black.overflow-hidden.crt-effect.fixed.inset-0 {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .h-screen.w-screen.bg-black .rounded-xl.bg-black\/60 {
+    min-height: 250px;
+  }
+
+  .h-full.w-full.p-3.md\:p-5 {
+    padding-bottom: 5rem;
+  }
+
+  /* --- SKILLS PAGE --- */
+  .grid.grid-cols-2.gap-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  div[class*="px-4"][class*="md:px-12"][class*="py-20"] {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 4rem;
+  }
+
+  .w-12.h-auto {
+    width: 2rem;
+  }
+
+  /* --- ADMIN DASHBOARD --- */
+  .min-h-screen .px-8 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Admin title smaller */
+  .min-h-screen h1[class*="text-5xl"] {
+    font-size: 1.3rem !important;
+  }
+
+  /* Admin subtitle */
+  .min-h-screen p[class*="tracking-"] {
+    font-size: 0.7rem;
+  }
+
+  /* Admin table: horizontal scroll */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 550px;
+  }
+
+  /* Admin modals: make responsive */
+  div[style*="maxWidth: '700px'"],
+  div[style*="maxWidth: '600px'"],
+  div[style*="maxWidth: '500px'"],
+  div[style*="max-width: 700px"],
+  div[style*="max-width: 600px"],
+  div[style*="max-width: 500px"] {
+    max-width: 95vw !important;
+    margin: 1rem !important;
+  }
+
+  /* Admin modal form grids — stack to 1 column */
+  div[style*="gridTemplateColumns: '1fr 1fr'"],
+  div[style*="grid-template-columns: 1fr 1fr"],
+  .grid.grid-cols-2.gap-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  div[style*="maxHeight"] {
+    max-height: calc(100vh - 6rem) !important;
+    overflow-y: auto !important;
+  }
+
+  /* --- CRT EFFECTS: lighter on mobile --- */
+  .crt-effect::before {
+    background-size: 100% 3px;
+    opacity: 0.5;
+  }
+
+  .scanline {
+    background-size: 100% 3px;
+  }
+}
+
+/* ---- Phone only (max-width: 480px) ---- */
+@media (max-width: 480px) {
+  :root {
+    --font-size: 14px;
+  }
+
+  .crt-effect::before {
+    opacity: 0.3;
+  }
+
+  /* Smaller titles on phone */
+  h1[class*="text-8xl"],
+  h1[class*="text-7xl"] {
+    font-size: 1.4rem !important;
+  }
+
+  h1[class*="text-6xl"] {
+    font-size: 1.2rem !important;
+  }
+
+  h1[class*="text-5xl"] {
+    font-size: 1.1rem !important;
+  }
+
+  /* Tighter card padding on phone */
+  .rounded-2xl[class*="p-12"],
+  .rounded-2xl[class*="p-10"],
+  .rounded-2xl[class*="p-8"] {
+    padding: 1rem !important;
+  }
+
+  /* Hobby/Education icons */
+  .p-6.rounded-2xl {
+    padding: 1rem;
+  }
+
+  .p-6.rounded-2xl svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* About page content even smaller */
+  .min-h-screen.bg-black .max-w-2xl {
+    padding: 1rem;
+  }
+
+  .min-h-screen.bg-black .max-w-2xl .text-xl.md\:text-2xl,
+  .min-h-screen.bg-black .max-w-2xl .text-xl {
+    font-size: 0.85rem !important;
+  }
+
+  /* Overview quadrants */
+  .h-screen.w-screen.bg-black .rounded-xl.bg-black\/60 {
+    min-height: 300px;
+  }
+
+  /* Projects image container even more fluid on phone */
+  div[style*="width: 520px"],
+  div[style*="width: '520px'"],
+  div[style*="width:'520px'"] {
+    width: calc(100vw - 4rem) !important;
+  }
+}

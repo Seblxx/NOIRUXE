@@ -447,8 +447,8 @@ export const Testimonials = () => {
                     </motion.button>
                   )}
 
-                  {/* Testimonials grid */}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
+                  {/* Testimonials grid - single column on mobile */}
+                  <div className="flex-1 grid grid-cols-1 gap-4 min-h-0">
                     <AnimatePresence mode="wait">
                       {publicItems.map((t) => (
                         <motion.div
@@ -460,9 +460,6 @@ export const Testimonials = () => {
                           className="group relative bg-black/60 backdrop-blur-xl rounded-lg p-6 border border-white/10 hover:border-white/20 transition-all duration-500"
                           style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}
                         >
-                          <div className="absolute top-3 right-4 group-hover:text-cyan-500/25 transition-colors duration-500" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                            <MessageSquareQuote size={32} />
-                          </div>
                           <p
                             className="text-white text-sm leading-relaxed mb-4 relative z-10"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
@@ -614,7 +611,7 @@ export const Testimonials = () => {
                   )}
 
                   {/* Testimonials list */}
-                  <div className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
+                  <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-hidden">
                     <AnimatePresence mode="wait">
                       {adminItems.map((t) => (
                         <motion.div
@@ -623,12 +620,12 @@ export const Testimonials = () => {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -20 }}
                           transition={{ duration: 0.2 }}
-                          className="bg-black/60 backdrop-blur-xl rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all"
+                          className="bg-black/60 backdrop-blur-xl rounded-lg p-2.5 border border-white/10 hover:border-white/20 transition-all"
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex flex-col md:flex-row md:items-center gap-3">
                             {/* Content */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                                 <StatusBadge status={t.status} />
                                 <span
                                   className="text-xs"
@@ -639,13 +636,13 @@ export const Testimonials = () => {
                               </div>
 
                               <p
-                                className="text-white text-sm leading-relaxed mb-2 line-clamp-2"
+                                className="text-white text-xs leading-relaxed mb-1.5 line-clamp-2"
                                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
                               >
                                 &quot;{language === 'fr' ? (t.testimonial_text_fr || t.testimonial_text_en) : t.testimonial_text_en}&quot;
                               </p>
 
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
                                 <User size={12} style={{ color: 'rgba(255,255,255,0.6)' }} />
                                 <p
                                   className="text-xs"
@@ -656,13 +653,13 @@ export const Testimonials = () => {
                               </div>
                             </div>
 
-                            {/* Action buttons - all use inline styles for guaranteed visibility */}
-                            <div className="flex gap-2 flex-shrink-0">
+                            {/* Action buttons - icon-only for cleaner mobile layout */}
+                            <div className="flex gap-1.5 flex-shrink-0">
                               {t.status !== 'approved' && (
                                 <button
                                   onClick={() => handleApprove(t.id)}
                                   disabled={actionLoading === t.id}
-                                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
+                                  className="flex items-center justify-center p-2.5 rounded-lg disabled:opacity-50 transition-all"
                                   style={{
                                     fontFamily: "'GT Pressura', sans-serif",
                                     color: '#4ade80',
@@ -671,15 +668,14 @@ export const Testimonials = () => {
                                   }}
                                   title="Approve"
                                 >
-                                  <Check size={14} />
-                                  <span><T>Approve</T></span>
+                                  <Check size={18} />
                                 </button>
                               )}
                               {t.status !== 'rejected' && (
                                 <button
                                   onClick={() => handleReject(t.id)}
                                   disabled={actionLoading === t.id}
-                                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
+                                  className="flex items-center justify-center p-2.5 rounded-lg disabled:opacity-50 transition-all"
                                   style={{
                                     fontFamily: "'GT Pressura', sans-serif",
                                     color: '#facc15',
@@ -688,14 +684,13 @@ export const Testimonials = () => {
                                   }}
                                   title="Reject"
                                 >
-                                  <X size={14} />
-                                  <span><T>Reject</T></span>
+                                  <X size={18} />
                                 </button>
                               )}
                               <button
                                 onClick={() => handleDelete(t.id)}
                                 disabled={actionLoading === t.id}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs tracking-wider uppercase disabled:opacity-50 transition-all"
+                                className="flex items-center justify-center p-2.5 rounded-lg disabled:opacity-50 transition-all"
                                 style={{
                                   fontFamily: "'GT Pressura', sans-serif",
                                   color: '#f87171',
@@ -704,8 +699,7 @@ export const Testimonials = () => {
                                 }}
                                 title="Delete"
                               >
-                                <Trash2 size={14} />
-                                <span><T>Delete</T></span>
+                                <Trash2 size={18} />
                               </button>
                             </div>
                           </div>
