@@ -8,8 +8,15 @@ from app.routers import skills, projects, work_experience, education, contact, a
 # Create database tables
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    Base.metadata.create_all(bind=engine)
+    # Startup - only create tables if DATABASE_URL is available
+    # In production (Vercel), tables should already exist
+    try:
+        if os.getenv("DATABASE_URL"):
+            Base.metadata.create_all(bind=engine)
+            print("✓ Database tables checked/created")
+    except Exception as e:
+        print(f"⚠️ Database initialization warning: {e}")
+        # Continue anyway - tables might already exist
     yield
     # Shutdown (if needed)
 
