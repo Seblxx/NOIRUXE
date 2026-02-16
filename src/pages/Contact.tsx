@@ -317,24 +317,24 @@ export const Contact = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-8"
             >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
-                <Send size={28} className="text-green-400" />
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                <Send size={28} className="text-white" />
               </div>
               <h3 
-                className="text-xl text-white mb-2"
+                className="text-2xl text-white mb-3 text-center"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
                 <T>Message Sent!</T>
               </h3>
               <p 
-                className="text-white/50 text-sm mb-6"
+                className="text-white/50 text-sm mb-8 text-center"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
                 <T>Thanks for reaching out. I'll get back to you soon.</T>
               </p>
               <button
                 onClick={() => setSuccess(false)}
-                className="text-white/50 hover:text-white text-sm tracking-wider uppercase transition-colors"
+                className="text-white/50 hover:text-white text-sm tracking-[0.2em] uppercase transition-colors text-center"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
                 <T>Send another message</T>

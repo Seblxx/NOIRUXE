@@ -41,8 +41,8 @@ export function CustomCursor() {
           height: '8px',
           borderRadius: '50%',
           backgroundColor: 'white',
-          zIndex: 99999,
-          mixBlendMode: 'difference',
+          zIndex: 2147483647,
+          boxShadow: '0 0 6px rgba(255,255,255,0.5)',
           opacity: visible ? 1 : 0,
           transition: 'opacity 0.15s ease',
         }}
