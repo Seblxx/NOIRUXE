@@ -351,8 +351,9 @@ class CanvAscii {
     this.container.appendChild(this.filter.domElement);
     this.setSize(this.width, this.height);
 
-    this.container.addEventListener('mousemove', this.onMouseMove);
-    this.container.addEventListener('touchmove', this.onMouseMove);
+    // Listen to window events for proper cursor tracking
+    window.addEventListener('mousemove', this.onMouseMove);
+    window.addEventListener('touchmove', this.onMouseMove);
   }
 
   setSize(w: number, h: number) {
@@ -373,10 +374,8 @@ class CanvAscii {
 
   onMouseMove(evt: any) {
     const e = evt.touches ? evt.touches[0] : evt;
-    const bounds = this.container.getBoundingClientRect();
-    const x = e.clientX - bounds.left;
-    const y = e.clientY - bounds.top;
-    this.mouse = { x, y };
+    // Use viewport coordinates instead of container-relative
+    this.mouse = { x: e.clientX * PX_RATIO, y: e.clientY * PX_RATIO };
   }
 
   animate() {
@@ -400,10 +399,13 @@ class CanvAscii {
   }
 
   updateRotation() {
+    // Map viewport coordinates to rotation values
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight * PX_RATIO : this.height;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth * PX_RATIO : this.width;
     // @ts-ignore
-    const x = Math.map(this.mouse.y, 0, this.height, 0.5, -0.5);
+    const x = Math.map(this.mouse.y, 0, viewportHeight, 0.5, -0.5);
     // @ts-ignore
-    const y = Math.map(this.mouse.x, 0, this.width, -0.5, 0.5);
+    const y = Math.map(this.mouse.x, 0, viewportWidth, -0.5, 0.5);
 
     this.mesh.rotation.x += (x - this.mesh.rotation.x) * 0.05;
     this.mesh.rotation.y += (y - this.mesh.rotation.y) * 0.05;
@@ -431,8 +433,8 @@ class CanvAscii {
     }
     this.filter.dispose();
     this.container.removeChild(this.filter.domElement);
-    this.container.removeEventListener('mousemove', this.onMouseMove);
-    this.container.removeEventListener('touchmove', this.onMouseMove);
+    window.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('touchmove', this.onMouseMove);
     this.clear();
     this.renderer.dispose();
   }

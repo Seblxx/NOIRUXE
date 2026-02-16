@@ -23,6 +23,7 @@ export default function App() {
   const [currentSection, setCurrentSection] = useState<Section>('home');
   const [isHomeSection, setIsHomeSection] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   
   // Portfolio data state
   const [skills, setSkills] = useState<skillsService.Skill[]>([]);
@@ -87,6 +88,16 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Handle responsive text for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Initialize scroll animations
   useScrollAnimations({ setCurrentSection, setIsHomeSection, loading });
 
@@ -138,7 +149,13 @@ export default function App() {
       >
         <TiltedCard />
         <div className="relative z-10 w-full h-screen flex items-center justify-center">
-          <AsciiText3D text="LEGAGNEUR" asciiFontSize={4} enableWaves={false} />
+          <AsciiText3D 
+            text="LEGAGNEUR" 
+            asciiFontSize={isMobile ? 3 : 4}
+            textFontSize={isMobile ? 120 : 200}
+            planeBaseHeight={isMobile ? 5 : 8}
+            enableWaves={false} 
+          />
         </div>
         
         <motion.div
