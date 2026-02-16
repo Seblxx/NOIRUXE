@@ -33,10 +33,8 @@ except Exception as e:
 
 # Create Supabase client with anon key (for authentication)
 try:
-    supabase: Client = create_client(
-        supabase_url=SUPABASE_URL,
-        supabase_key=SUPABASE_ANON_KEY
-    )
+    from supabase import create_client as _create_client
+    supabase: Client = _create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 except Exception as e:
     print(f"Warning: Could not initialize Supabase client: {e}")
     print("JWT verification will still work for authentication.")

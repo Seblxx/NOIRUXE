@@ -27,7 +27,6 @@ cors_origins = [
     "http://localhost:5174",
     "http://localhost:3000",
     "http://localhost:4200",
-    "https://*.vercel.app",  # Allow all Vercel preview deployments
 ]
 
 # Add production frontend URL from environment variable
@@ -37,7 +36,7 @@ if frontend_url:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["*"],  # Allow all origins for Vercel deployments
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,13 +54,8 @@ app.include_router(resumes.router, prefix="/api/resumes", tags=["Resumes"])
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 
-# Serve uploaded files as static (use /tmp for serverless)
-UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/tmp/uploads")
-try:
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-except Exception as e:
-    print(f"Warning: Could not mount uploads directory: {e}")
+# Note: File uploads should use cloud storage (like Supabase Storage) for serverless
+# StaticFiles mounting doesn't work well in serverless environments
 
 @app.get("/")
 async def root():
