@@ -55,10 +55,13 @@ app.include_router(resumes.router, prefix="/api/resumes", tags=["Resumes"])
 app.include_router(testimonials.router, prefix="/api/testimonials", tags=["Testimonials"])
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 
-# Serve uploaded files as static
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+# Serve uploaded files as static (use /tmp for serverless)
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/tmp/uploads")
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+except Exception as e:
+    print(f"Warning: Could not mount uploads directory: {e}")
 
 @app.get("/")
 async def root():
