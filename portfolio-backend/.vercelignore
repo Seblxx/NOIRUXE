@@ -1,0 +1,51 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Local uploads (use Supabase Storage instead)
+uploads/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files (Vercel uses env vars)
+.env
+.env.local
+
+# Logs
+*.log
+server.log
+
+# Build artifacts
+.gradle/
+build/
+dist/
+
+# Testing
+test-results/
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Development scripts
+seed_data.py
+create_admin.py
+start_server.py
+
+# Procfile (for Heroku, not Vercel)
+Procfile

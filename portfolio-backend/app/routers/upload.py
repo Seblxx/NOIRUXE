@@ -83,11 +83,3 @@ async def delete_file(
         return {"message": f"File {filename} deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
-        f.write(contents)
-
-    # Return the URL path (frontend will prepend API host if needed)
-    return {
-        "url": f"/uploads/{unique_name}",
-        "filename": file.filename,
-        "size": len(contents),
-    }

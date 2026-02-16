@@ -18,7 +18,15 @@ elif DATABASE_URL.startswith("sqlite"):
     print(f"📁 Using SQLite database")
 else:
     # PostgreSQL (Supabase or other)
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5, max_overflow=10)
+    # For serverless: smaller pool, shorter timeout, aggressive recycling
+    engine = create_engine(
+        DATABASE_URL, 
+        pool_pre_ping=True,
+        pool_size=2,
+        max_overflow=3,
+        pool_recycle=300,
+        pool_timeout=30
+    )
     print(f"🐘 Using PostgreSQL database")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

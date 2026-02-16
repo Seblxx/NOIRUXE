@@ -39,7 +39,6 @@ except Exception as e:
     print(f"Warning: Could not initialize Supabase client: {e}")
     print("JWT verification will still work for authentication.")
     supabase = None
-    supabase = None
 
 security = HTTPBearer()
 
