@@ -1,6 +1,7 @@
 import os
 import uuid
 import logging
+import httpx
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from app.auth import get_current_user
 
@@ -19,35 +20,17 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 STORAGE_BUCKET = "portfolio-files"
 
 
-def _get_storage_client():
-    """Create a Supabase client for storage operations.
-    Prefers service-role key (bypasses RLS), falls back to anon key."""
-    from supabase import create_client
-    url = os.getenv("SUPABASE_URL")
+def _get_supabase_config():
+    """Get Supabase URL and key for storage operations."""
+    url = os.getenv("SUPABASE_URL", "").rstrip("/")
+    # Prefer service key if it's a real JWT, otherwise use anon key
     service_key = os.getenv("SUPABASE_SERVICE_KEY", "")
     anon_key = os.getenv("SUPABASE_ANON_KEY", "")
-    
-    # Use service key only if it looks like a real JWT, otherwise use anon key
-    if service_key and service_key.startswith("eyJ"):
-        key = service_key
-        logger.info("Using service-role key for storage")
-    elif anon_key:
-        key = anon_key
-        logger.info("Using anon key for storage (service key not available)")
-    else:
-        logger.error("No Supabase keys available for storage")
-        return None
-    
-    if not url:
-        logger.error("SUPABASE_URL not set")
-        return None
-    
-    try:
-        client = create_client(url, key)
-        return client
-    except Exception as e:
-        logger.error(f"Failed to create Supabase storage client: {e}")
-        return None
+    key = service_key if service_key.startswith("eyJ") else anon_key
+    if not url or not key:
+        logger.error(f"Missing Supabase config: URL={'set' if url else 'MISSING'}, KEY={'set' if key else 'MISSING'}")
+        return None, None
+    return url, key
 
 
 @router.post("")
@@ -55,15 +38,15 @@ async def upload_file(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
 ):
-    """Upload a file to Supabase Storage (admin only). Returns the public URL."""
-    
-    storage_client = _get_storage_client()
-    if not storage_client:
+    """Upload a file to Supabase Storage via REST API (admin only). Returns the public URL."""
+
+    supabase_url, supabase_key = _get_supabase_config()
+    if not supabase_url or not supabase_key:
         raise HTTPException(
             status_code=503,
-            detail="Supabase Storage not configured. Check SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables."
+            detail="Supabase Storage not configured. SUPABASE_URL and SUPABASE_ANON_KEY must be set."
         )
-    
+
     # Validate extension
     _, ext = os.path.splitext(file.filename or "")
     ext = ext.lower()
@@ -81,29 +64,48 @@ async def upload_file(
             detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)} MB.",
         )
 
-    # Generate unique filename
-    unique_name = f"{uuid.uuid4().hex[:12]}_{file.filename}"
+    # Generate unique filename (no spaces, safe for URLs)
+    safe_filename = (file.filename or "file").replace(" ", "_")
+    unique_name = f"{uuid.uuid4().hex[:12]}_{safe_filename}"
+    content_type = file.content_type or "application/octet-stream"
+
+    # Upload via Supabase Storage REST API
+    upload_url = f"{supabase_url}/storage/v1/object/{STORAGE_BUCKET}/{unique_name}"
+    headers = {
+        "Authorization": f"Bearer {supabase_key}",
+        "apikey": supabase_key,
+        "Content-Type": content_type,
+    }
 
     try:
-        # Upload to Supabase Storage
-        response = storage_client.storage.from_(STORAGE_BUCKET).upload(
-            path=unique_name,
-            file=contents,
-            file_options={"content-type": file.content_type or "application/octet-stream"}
-        )
-        
-        # Get public URL
-        public_url = storage_client.storage.from_(STORAGE_BUCKET).get_public_url(unique_name)
-        
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(upload_url, content=contents, headers=headers)
+
+        if resp.status_code not in (200, 201):
+            detail = resp.text
+            logger.error(f"Supabase upload failed ({resp.status_code}): {detail}")
+            raise HTTPException(
+                status_code=502,
+                detail=f"Supabase Storage error ({resp.status_code}): {detail}"
+            )
+
+        # Build public URL
+        public_url = f"{supabase_url}/storage/v1/object/public/{STORAGE_BUCKET}/{unique_name}"
+
         return {
             "url": public_url,
             "filename": unique_name,
             "original_filename": file.filename,
-            "size": len(contents)
+            "size": len(contents),
         }
-    
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error uploading to Supabase: {e}")
+        raise HTTPException(status_code=502, detail=f"Could not reach Supabase Storage: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Upload to Supabase failed: {str(e)}")
+        logger.error(f"Unexpected upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
@@ -112,14 +114,28 @@ async def delete_file(
     filename: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Delete a file from Supabase Storage (admin only)."""
-    
-    supabase_client = _get_storage_client()
-    if not supabase_client:
+    """Delete a file from Supabase Storage via REST API (admin only)."""
+
+    supabase_url, supabase_key = _get_supabase_config()
+    if not supabase_url or not supabase_key:
         raise HTTPException(status_code=503, detail="Supabase Storage not configured")
-    
+
+    delete_url = f"{supabase_url}/storage/v1/object/{STORAGE_BUCKET}"
+    headers = {
+        "Authorization": f"Bearer {supabase_key}",
+        "apikey": supabase_key,
+        "Content-Type": "application/json",
+    }
+
     try:
-        supabase_client.storage.from_(STORAGE_BUCKET).remove([filename])
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.request("DELETE", delete_url, json={"prefixes": [filename]}, headers=headers)
+
+        if resp.status_code not in (200, 201, 204):
+            raise HTTPException(status_code=502, detail=f"Supabase delete error: {resp.text}")
+
         return {"message": f"File {filename} deleted successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")

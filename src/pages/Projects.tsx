@@ -268,7 +268,7 @@ export const Projects = () => {
         <span className="text-sm tracking-widest"><T>HOME</T></span>
       </motion.button>
 
-      {/* Visit Project link - positioned at bottom left */}
+      {/* Visit Project link - bottom right */}
       {currentProject?.project_url && (
         <motion.a
           href={currentProject.project_url}
@@ -278,7 +278,7 @@ export const Projects = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
           whileHover={{ scale: 1.05, y: -3 }}
-          className="fixed bottom-6 left-6 md:bottom-10 md:left-10 z-50 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
+          className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
           style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
         >
           <ExternalLink size={16} />
@@ -491,7 +491,7 @@ export const Projects = () => {
         </motion.div>
       </motion.div>
 
-      {/* Next Project Button - Always visible */}
+      {/* Next Project Button - bottom left */}
       {projects.length > 1 && (
         <motion.button
           onClick={nextProject}
@@ -499,7 +499,7 @@ export const Projects = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           whileHover={{ y: -3 }}
-          className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-40 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
+          className="fixed bottom-6 left-6 md:bottom-10 md:left-10 z-40 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
           style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
         >
           <span className="text-xs md:text-sm tracking-widest uppercase">
