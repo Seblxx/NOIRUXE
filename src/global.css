@@ -656,7 +656,7 @@ textarea {
   body * {
     cursor: auto !important;
   }
-  .fixed.w-2.h-2.bg-white.rounded-full.pointer-events-none {
+  .custom-cursor-dot {
     display: none !important;
   }
   /* Ensure all buttons are tappable */

@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 
 const EMAILJS_SERVICE_ID = 'service_ds5co9t';
 const EMAILJS_TEMPLATE_ID = 'template_pcw8f7h';
-const EMAILJS_VERIFICATION_TEMPLATE_ID = 'template_verification'; // Create this template in EmailJS
+const EMAILJS_VERIFICATION_TEMPLATE_ID = 'template_q4jp97z';
 const EMAILJS_PUBLIC_KEY = 'QVGjsCgwvtrQV1XXH';
 
 // Store verification codes in memory (in production, use backend database)
@@ -44,7 +44,7 @@ export const sendVerificationCode = async (email: string, name: string): Promise
     EMAILJS_SERVICE_ID,
     EMAILJS_VERIFICATION_TEMPLATE_ID,
     {
-      to_email: email,
+      email: email,
       to_name: name,
       verification_code: code,
     },
@@ -77,7 +77,7 @@ export const sendContactMessage = async (data: ContactMessage, verificationCode:
   // Verify the code first
   verifyCode(data.email, verificationCode);
 
-  // Send email notification
+  // Send email notification with styled HTML
   await emailjs.send(
     EMAILJS_SERVICE_ID,
     EMAILJS_TEMPLATE_ID,
@@ -85,6 +85,27 @@ export const sendContactMessage = async (data: ContactMessage, verificationCode:
       from_name: data.name,
       from_email: data.email,
       message: data.message,
+      html_message: `
+        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h2 style="color: white; margin: 0;">New Contact Message</h2>
+          </div>
+          <div style="background-color: #1a1a2e; padding: 30px; border-radius: 0 0 10px 10px;">
+            <p style="color: #e0e0e0; font-size: 14px; margin-bottom: 15px;">A message from <strong style="color: white;">${data.name}</strong> has been received.</p>
+            <div style="background-color: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+              <p style="color: #8892b0; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Email</p>
+              <p style="color: #64ffda; font-size: 14px; margin: 0;"><a href="mailto:${data.email}" style="color: #64ffda;">${data.email}</a></p>
+            </div>
+            <div style="background-color: #16213e; padding: 15px; border-radius: 8px;">
+              <p style="color: #8892b0; font-size: 12px; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Message</p>
+              <p style="color: white; font-size: 16px; margin: 0; line-height: 1.6;">${data.message}</p>
+            </div>
+            <div style="margin-top: 20px; padding: 12px; background-color: #0a192f; border-radius: 6px; text-align: center;">
+              <p style="color: #8892b0; font-size: 12px; margin: 0;">Reply to: <a href="mailto:${data.email}" style="color: #64ffda;">${data.email}</a></p>
+            </div>
+          </div>
+        </div>
+      `,
     },
     EMAILJS_PUBLIC_KEY
   );
