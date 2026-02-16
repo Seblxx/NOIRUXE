@@ -1,12 +1,9 @@
 import os
 import uuid
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from app.auth import get_current_user
+from app.auth import get_current_user, supabase
 
 router = APIRouter()
-
-# Uploads directory — relative to where the backend runs
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads")
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".avi"}
@@ -15,13 +12,20 @@ ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | ALLOWED_VIDEO_EXTENSIONS | ALLOW
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
+# Supabase Storage bucket name
+STORAGE_BUCKET = "portfolio-files"
+
 
 @router.post("")
 async def upload_file(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
 ):
-    """Upload a file (admin only). Returns the URL to access the file."""
+    """Upload a file to Supabase Storage (admin only). Returns the public URL."""
+    
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Supabase Storage not configured")
+    
     # Validate extension
     _, ext = os.path.splitext(file.filename or "")
     ext = ext.lower()
@@ -39,15 +43,46 @@ async def upload_file(
             detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)} MB.",
         )
 
-    # Create uploads directory if needed
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-
     # Generate unique filename
     unique_name = f"{uuid.uuid4().hex[:12]}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-    # Save file
-    with open(file_path, "wb") as f:
+    try:
+        # Upload to Supabase Storage
+        response = supabase.storage.from_(STORAGE_BUCKET).upload(
+            path=unique_name,
+            file=contents,
+            file_options={"content-type": file.content_type or "application/octet-stream"}
+        )
+        
+        # Get public URL
+        public_url = supabase.storage.from_(STORAGE_BUCKET).get_public_url(unique_name)
+        
+        return {
+            "url": public_url,
+            "filename": unique_name,
+            "original_filename": file.filename,
+            "size": len(contents)
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@router.delete("/{filename}")
+async def delete_file(
+    filename: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a file from Supabase Storage (admin only)."""
+    
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Supabase Storage not configured")
+    
+    try:
+        supabase.storage.from_(STORAGE_BUCKET).remove([filename])
+        return {"message": f"File {filename} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
         f.write(contents)
 
     # Return the URL path (frontend will prepend API host if needed)
