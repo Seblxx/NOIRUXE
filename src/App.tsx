@@ -150,14 +150,12 @@ export default function App() {
         }}
       >
         <TiltedCard />
-        <div className="relative z-10 w-full h-screen flex items-center justify-center overflow-x-auto md:overflow-visible px-4 touch-pan-x">
-          <div className="min-w-max md:min-w-0">
-            <AsciiText3D 
-              text="LEGAGNEUR" 
-              asciiFontSize={isMobile ? 2 : 4} 
-              enableWaves={false} 
-            />
-          </div>
+        <div className="relative z-10 w-full h-screen flex items-center justify-center overflow-x-auto px-4">
+          <AsciiText3D 
+            text="LEGAGNEUR" 
+            asciiFontSize={isMobile ? 2 : 4} 
+            enableWaves={false} 
+          />
         </div>
         
         <motion.div
