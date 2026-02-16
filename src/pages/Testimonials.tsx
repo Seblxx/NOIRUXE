@@ -432,6 +432,22 @@ export const Testimonials = () => {
               </div>
             ) : (
               <>
+                {/* Write a Testimonial button - Mobile First - Above testimonials */}
+                <div className="flex justify-center mb-8 md:hidden flex-shrink-0 order-first">
+                  {!showForm && !submitSuccess && (
+                    <motion.button
+                      onClick={() => setShowForm(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="px-6 py-3 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-3"
+                      style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
+                    >
+                      <MessageSquareQuote size={16} />
+                      <span className="text-xs uppercase tracking-widest"><T>Write a Testimonial</T></span>
+                    </motion.button>
+                  )}
+                </div>
+
                 {/* Cards with arrows */}
                 <div className="flex items-center gap-4">
                   {/* Left Arrow */}
@@ -461,7 +477,7 @@ export const Testimonials = () => {
                           style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}
                         >
                           <p
-                            className="text-white text-sm leading-relaxed mb-4 relative z-10"
+                            className="text-white text-lg md:text-sm leading-relaxed mb-4 relative z-10"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
                           >
                             &quot;{language === 'fr' ? (t.testimonial_text_fr || t.testimonial_text_en) : t.testimonial_text_en}&quot;
@@ -511,8 +527,8 @@ export const Testimonials = () => {
                   </div>
                 )}
 
-                {/* Write a Testimonial button */}
-                <div className="flex justify-center mt-3 flex-shrink-0">
+                {/* Write a Testimonial button - Desktop only (mobile has it at top) */}
+                <div className="hidden md:flex justify-center mt-3 flex-shrink-0">
                   {!showForm && !submitSuccess && (
                     <motion.button
                       onClick={() => setShowForm(true)}
