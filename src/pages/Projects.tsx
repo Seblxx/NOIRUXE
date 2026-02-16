@@ -268,21 +268,21 @@ export const Projects = () => {
         <span className="text-sm tracking-widest"><T>HOME</T></span>
       </motion.button>
 
-      {/* Visit Project link - bottom right */}
+      {/* Visit Project link - top right */}
       {currentProject?.project_url && (
         <motion.a
           href={currentProject.project_url}
           target="_blank"
           rel="noopener noreferrer"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          whileHover={{ scale: 1.05, y: -3 }}
-          className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
-          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          whileHover={{ scale: 1.05 }}
+          className="fixed top-8 right-8 z-50 flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all backdrop-blur-sm"
+          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.1em' }}
         >
-          <ExternalLink size={16} />
-          <span className="text-xs md:text-sm tracking-widest uppercase"><T>VISIT</T></span>
+          <ExternalLink size={18} />
+          <span className="text-sm tracking-wider"><T>VISIT</T></span>
         </motion.a>
       )}
 
@@ -491,7 +491,7 @@ export const Projects = () => {
         </motion.div>
       </motion.div>
 
-      {/* Next Project Button - bottom left */}
+      {/* Next Project Button - bottom right */}
       {projects.length > 1 && (
         <motion.button
           onClick={nextProject}
@@ -499,7 +499,7 @@ export const Projects = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           whileHover={{ y: -3 }}
-          className="fixed bottom-6 left-6 md:bottom-10 md:left-10 z-40 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
+          className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-40 flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border border-white/30 rounded-lg text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all backdrop-blur-sm"
           style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
         >
           <span className="text-xs md:text-sm tracking-widest uppercase">
