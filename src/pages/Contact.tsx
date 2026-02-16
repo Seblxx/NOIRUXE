@@ -302,26 +302,13 @@ export const Contact = () => {
                 <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:border-white/30 transition-all">
                   <social.icon size={24} className="text-white/70 group-hover:text-white transition-colors" />
                 </div>
-                <span 
-                  className="text-xs text-white/40 group-hover:text-white/70 transition-colors tracking-wider uppercase"
-                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                >
-                  {social.label}
-                </span>
               </motion.a>
             ))}
           </motion.div>
 
           {/* Divider */}
-          <div className="flex items-center gap-4 mb-8">
-            <div className="flex-1 h-px bg-white/10" />
-            <span 
-              className="text-white/30 text-xs tracking-widest uppercase"
-              style={{ fontFamily: "'GT Pressura', sans-serif" }}
-            >
-              <T>or send a message</T>
-            </span>
-            <div className="flex-1 h-px bg-white/10" />
+          <div className="mb-8">
+            <div className="h-px bg-white/10" />
           </div>
 
           {success ? (
@@ -526,11 +513,6 @@ export const Contact = () => {
                     <span>{loading ? <T>Sending...</T> : <T>Send Message</T>}</span>
                     {!loading && <Send size={16} />}
                   </button>
-                  {!isVerified && (
-                    <p className="text-xs text-white/40 text-center mt-2" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
-                      <T>Please verify your email to send a message</T>
-                    </p>
-                  )}
                 </motion.div>
               </form>
             </>

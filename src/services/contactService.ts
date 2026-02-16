@@ -86,23 +86,29 @@ export const sendContactMessage = async (data: ContactMessage, verificationCode:
       from_email: data.email,
       message: data.message,
       html_message: `
-        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h2 style="color: white; margin: 0;">New Contact Message</h2>
+        <div style="font-family: system-ui, sans-serif, Arial; font-size: 14px; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">New Contact Message</h1>
           </div>
-          <div style="background-color: #1a1a2e; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="color: #e0e0e0; font-size: 14px; margin-bottom: 15px;">A message from <strong style="color: white;">${data.name}</strong> has been received.</p>
-            <div style="background-color: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-              <p style="color: #8892b0; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Email</p>
-              <p style="color: #64ffda; font-size: 14px; margin: 0;"><a href="mailto:${data.email}" style="color: #64ffda;">${data.email}</a></p>
+          <div style="background-color: #f8f9fa; padding: 40px 30px; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px; color: #2c3e50; margin-bottom: 20px;">
+              A message from <strong>${data.name}</strong> has been received.
+            </p>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #667eea;">
+              <div style="font-size: 12px; color: #6c757d; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 2px;">From</div>
+              <div style="font-size: 16px; font-weight: bold; color: #2c3e50;">${data.name}</div>
+              <div style="font-size: 14px; color: #667eea; margin-top: 4px;"><a href="mailto:${data.email}" style="color: #667eea; text-decoration: none;">${data.email}</a></div>
             </div>
-            <div style="background-color: #16213e; padding: 15px; border-radius: 8px;">
-              <p style="color: #8892b0; font-size: 12px; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Message</p>
-              <p style="color: white; font-size: 16px; margin: 0; line-height: 1.6;">${data.message}</p>
+            <div style="background-color: white; padding: 20px; border-radius: 8px; border: 2px solid #667eea;">
+              <div style="font-size: 12px; color: #6c757d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Message</div>
+              <p style="font-size: 16px; color: #2c3e50; margin: 0; line-height: 1.6;">${data.message}</p>
             </div>
-            <div style="margin-top: 20px; padding: 12px; background-color: #0a192f; border-radius: 6px; text-align: center;">
-              <p style="color: #8892b0; font-size: 12px; margin: 0;">Reply to: <a href="mailto:${data.email}" style="color: #64ffda;">${data.email}</a></p>
-            </div>
+            <p style="font-size: 14px; color: #6c757d; margin-top: 30px;">
+              Reply to: <a href="mailto:${data.email}" style="color: #667eea; text-decoration: none;"><strong>${data.email}</strong></a>
+            </p>
+          </div>
+          <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 12px;">
+            <p>Sent from NOIRUXE Portfolio contact form.</p>
           </div>
         </div>
       `,

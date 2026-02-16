@@ -151,14 +151,15 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
       {/* ===== DESKTOP MENUS — only render on desktop ===== */}
       {/* Bottom Menu - Only visible on home screen */}
       {!isMobile && isExpanded && (
-        <div className="fixed bottom-8 left-8 z-50">
+        <div className="fixed bottom-8 left-8 z-50 max-w-[calc(100vw-4rem)]">
           <AnimatePresence mode="wait">
             {menuOpen ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="flex items-center gap-6"
+                className="flex items-center gap-4 flex-wrap"
+                style={{ pointerEvents: 'auto' }}
               >
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
@@ -233,7 +234,7 @@ export function SimpleMenu({ items, isExpanded }: SimpleMenuProps) {
           exit={{ x: -100, opacity: 0 }}
           className="fixed left-0 top-0 h-screen flex items-center z-50"
         >
-          <div className="bg-gradient-to-r from-black/80 via-black/60 to-transparent backdrop-blur-md border-r border-white/10 py-12 px-6">
+          <div className="bg-gradient-to-r from-black/80 via-black/60 to-transparent backdrop-blur-md border-r border-white/10 py-12 px-6" style={{ pointerEvents: 'auto', cursor: 'none' }}>
             <div className="flex flex-col gap-8">
               {/* Menu Items */}
               {items.map((item, idx) => (
