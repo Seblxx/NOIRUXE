@@ -212,9 +212,24 @@ const FileUploadField = ({
           <div className="space-y-2">
             {/* Thumbnail preview */}
             {isImage && (
-              <div className="flex flex-wrap gap-1.5 max-h-[4.5rem] overflow-y-auto">
+              <div className="flex flex-wrap gap-1.5 max-h-[5rem] overflow-y-auto">
                 {urlList.map((u: string, i: number) => (
-                  <img key={i} src={u} alt="" className="h-10 w-10 object-cover rounded border border-white/20" />
+                  <div key={i} className="relative group">
+                    <img src={u} alt="" className="h-10 w-10 object-cover rounded border border-white/20" />
+                    {multiple && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const updated = urlList.filter((_: string, idx: number) => idx !== i).join(', ');
+                          onChange(name, updated);
+                        }}
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/90 text-white flex items-center justify-center text-[8px] leading-none opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -648,7 +663,6 @@ export const AdminDashboard = () => {
           <FormField label={t('f.title', 'Title', 'Titre')} name="title_en" value={formData.title_en} onChange={handleFieldChange} />
           <FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
           <FormField label={t('f.technologies', 'Technologies (comma-separated)', 'Technologies (séparées par virgules)')} name="technologies" value={formData.technologies} onChange={handleFieldChange} />
-          <FormField label={t('f.category', 'Category', 'Catégorie')} name="category" value={formData.category} onChange={handleFieldChange} />
           <FormField label={t('f.projectUrl', 'Project URL', 'URL du projet')} name="project_url" value={formData.project_url} onChange={handleFieldChange} />
           <FormField label={t('f.githubUrl', 'GitHub URL', 'URL GitHub')} name="github_url" value={formData.github_url} onChange={handleFieldChange} />
         </div>
