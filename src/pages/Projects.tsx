@@ -484,6 +484,24 @@ export const Projects = () => {
         </motion.div>
       </motion.div>
 
+      {/* Next Project Button - Desktop only */}
+      {projects.length > 1 && (
+        <motion.button
+          onClick={nextProject}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          whileHover={{ y: -3 }}
+          className="hidden md:flex fixed bottom-10 right-10 z-40 items-center gap-3 px-6 py-3 border border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all"
+          style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
+        >
+          <span className="text-sm tracking-widest uppercase">
+            {language === 'fr' ? 'SUIVANT' : 'NEXT'}
+          </span>
+          <ChevronRight size={18} />
+        </motion.button>
+      )}
+
       {/* Bottom Menu */}
       <SimpleMenu 
         items={menuItems} 

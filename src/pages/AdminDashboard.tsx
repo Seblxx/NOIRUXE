@@ -129,7 +129,9 @@ const FileUploadField = ({
           });
           if (!res.ok) throw new Error('Upload failed');
           const data = await res.json();
-          urls.push(`${API_HOST}${data.url}`);
+          // If URL is already absolute (Supabase), use as-is; otherwise prepend API_HOST
+          const fileUrl = data.url.startsWith('http') ? data.url : `${API_HOST}${data.url}`;
+          urls.push(fileUrl);
         }
         onChange(name, urls.join(', '));
       } else {
@@ -142,7 +144,9 @@ const FileUploadField = ({
         });
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
-        onChange(name, `${API_HOST}${data.url}`);
+        // If URL is already absolute (Supabase), use as-is; otherwise prepend API_HOST
+        const fileUrl = data.url.startsWith('http') ? data.url : `${API_HOST}${data.url}`;
+        onChange(name, fileUrl);
       }
     } catch (err) {
       console.error('Upload error:', err);
