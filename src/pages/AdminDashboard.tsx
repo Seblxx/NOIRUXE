@@ -129,7 +129,10 @@ const FileUploadField = ({
             headers: { Authorization: `Bearer ${token}` },
             body: fd,
           });
-          if (!res.ok) throw new Error('Upload failed');
+          if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.detail || `Upload failed (${res.status})`);
+          }
           const data = await res.json();
           // If URL is already absolute (Supabase), use as-is; otherwise prepend API_HOST
           const fileUrl = data.url.startsWith('http') ? data.url : `${API_HOST}${data.url}`;
@@ -144,7 +147,10 @@ const FileUploadField = ({
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-        if (!res.ok) throw new Error('Upload failed');
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.detail || `Upload failed (${res.status})`);
+        }
         const data = await res.json();
         // If URL is already absolute (Supabase), use as-is; otherwise prepend API_HOST
         const fileUrl = data.url.startsWith('http') ? data.url : `${API_HOST}${data.url}`;
