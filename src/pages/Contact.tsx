@@ -78,25 +78,84 @@ export const Contact = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
+  
+  // Email verification states
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isVerificationSent, setIsVerificationSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  // Countdown timer for resend
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const handleSendVerificationCode = async () => {
+    if (!email || !name) {
+      setError(language === 'fr' ? 'Veuillez entrer votre nom et courriel d\'abord.' : 'Please enter your name and email first.');
+      return;
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError(language === 'fr' ? 'Veuillez entrer une adresse courriel valide.' : 'Please enter a valid email address.');
-      setLoading(false);
+      return;
+    }
+
+    setError('');
+    setSendingCode(true);
+
+    try {
+      await contactService.sendVerificationCode(email, name);
+      setIsVerificationSent(true);
+      setCountdown(60); // 60 second cooldown
+      setError('');
+    } catch (err: any) {
+      setError(err.message || (language === 'fr' ? 'Échec de l\'envoi du code. Veuillez réessayer.' : 'Failed to send verification code. Please try again.'));
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setError(language === 'fr' ? 'Veuillez entrer le code à 6 chiffres.' : 'Please enter the 6-digit code.');
       return;
     }
 
     try {
-      await contactService.sendContactMessage({ name, email, message });
+      contactService.verifyCode(email, verificationCode);
+      setIsVerified(true);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || (language === 'fr' ? 'Code de vérification invalide.' : 'Invalid verification code.'));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!isVerified) {
+      setError(language === 'fr' ? 'Veuillez vérifier votre courriel d\'abord.' : 'Please verify your email first.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await contactService.sendContactMessage({ name, email, message }, verificationCode);
       setSuccess(true);
       setName('');
       setEmail('');
       setMessage('');
+      setVerificationCode('');
+      setIsVerificationSent(false);
+      setIsVerified(false);
     } catch (err: any) {
       setError(err.message || (language === 'fr' ? 'Échec de l\'envoi du message. Veuillez réessayer.' : 'Failed to send message. Please try again.'));
     } finally {
@@ -341,16 +400,94 @@ export const Contact = () => {
                   >
                     <T>Email</T>
                   </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
-                    style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                    placeholder={language === 'fr' ? 'votre@courriel.com' : 'your@email.com'}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setIsVerificationSent(false);
+                        setIsVerified(false);
+                        setVerificationCode('');
+                      }}
+                      required
+                      disabled={isVerified}
+                      className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                      placeholder={language === 'fr' ? 'votre@courriel.com' : 'your@email.com'}
+                    />
+                    {!isVerified && (
+                      <button
+                        type="button"
+                        onClick={handleSendVerificationCode}
+                        disabled={sendingCode || countdown > 0 || !email || !name}
+                        className="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm font-bold tracking-wider uppercase hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                      >
+                        {sendingCode ? (
+                          <T>Sending...</T>
+                        ) : countdown > 0 ? (
+                          `${countdown}s`
+                        ) : isVerificationSent ? (
+                          <T>Resend</T>
+                        ) : (
+                          <T>Verify</T>
+                        )}
+                      </button>
+                    )}
+                    {isVerified && (
+                      <div className="px-4 py-3 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center justify-center">
+                        <span className="text-green-400 text-sm font-bold">✓</span>
+                      </div>
+                    )}
+                  </div>
+                  {isVerificationSent && !isVerified && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 text-xs text-white/50"
+                      style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                    >
+                      <T>Check your email for the verification code</T>
+                    </motion.p>
+                  )}
                 </motion.div>
+
+                {/* Verification Code Input */}
+                {isVerificationSent && !isVerified && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label 
+                      className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
+                      style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                    >
+                      <T>Verification Code</T>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        maxLength={6}
+                        placeholder="000000"
+                        className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base text-center tracking-[0.5em] placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all font-mono"
+                        style={{ fontFamily: "monospace" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyCode}
+                        disabled={verificationCode.length !== 6}
+                        className="px-6 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm font-bold tracking-wider uppercase hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                      >
+                        <T>Confirm</T>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
 
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -382,13 +519,18 @@ export const Contact = () => {
                 >
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !isVerified}
                     className="group relative w-full py-4 bg-white text-black font-bold tracking-[0.2em] uppercase text-sm rounded-lg hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden flex items-center justify-center gap-2"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
                     <span>{loading ? <T>Sending...</T> : <T>Send Message</T>}</span>
                     {!loading && <Send size={16} />}
                   </button>
+                  {!isVerified && (
+                    <p className="text-xs text-white/40 text-center mt-2" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
+                      <T>Please verify your email to send a message</T>
+                    </p>
+                  )}
                 </motion.div>
               </form>
             </>

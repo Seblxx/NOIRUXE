@@ -3,7 +3,11 @@ import { api } from '@/lib/api';
 
 const EMAILJS_SERVICE_ID = 'service_ds5co9t';
 const EMAILJS_TEMPLATE_ID = 'template_pcw8f7h';
+const EMAILJS_VERIFICATION_TEMPLATE_ID = 'template_verification'; // Create this template in EmailJS
 const EMAILJS_PUBLIC_KEY = 'QVGjsCgwvtrQV1XXH';
+
+// Store verification codes in memory (in production, use backend database)
+const verificationCodes = new Map<string, { code: string; expiresAt: number; name: string }>();
 
 export interface ContactMessage {
   name: string;
@@ -22,8 +26,83 @@ export interface StoredContactMessage {
   created_at: string;
 }
 
-// Send email via EmailJS AND store in database
-export const sendContactMessage = async (data: ContactMessage): Promise<void> => {
+// Generate 6-digit verification code
+const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Send verification code to email
+export const sendVerificationCode = async (email: string, name: string): Promise<void> => {
+  const code = generateVerificationCode();
+  const expiresAt = Date.now() + 10 * 60 * 1000; // Expires in 10 minutes
+
+  // Store code
+  verificationCodes.set(email, { code, expiresAt, name });
+
+  // Send email with verification code
+  await emailjs.send(
+    EMAILJS_SERVICE_ID,
+    EMAILJS_VERIFICATION_TEMPLATE_ID,
+    {
+      to_email: email,
+      to_name: name,
+      verification_code: code,
+    },
+    EMAILJS_PUBLIC_KEY
+  );
+};
+
+// Verify the code entered by user
+export const verifyCode = (email: string, code: string): boolean => {
+  const stored = verificationCodes.get(email);
+  
+  if (!stored) {
+    throw new Error('No verification code found. Please request a new code.');
+  }
+
+  if (Date.now() > stored.expiresAt) {
+    verificationCodes.delete(email);
+    throw new Error('Verification code has expired. Please request a new code.');
+  }
+
+  if (stored.code !== code) {
+    throw new Error('Invalid verification code. Please try again.');
+  }
+
+  return true;
+};
+
+// Send email via EmailJS AND store in database (with verification)
+export const sendContactMessage = async (data: ContactMessage, verificationCode: string): Promise<void> => {
+  // Verify the code first
+  verifyCode(data.email, verificationCode);
+
+  // Send email notification
+  await emailjs.send(
+    EMAILJS_SERVICE_ID,
+    EMAILJS_TEMPLATE_ID,
+    {
+      from_name: data.name,
+      from_email: data.email,
+      message: data.message,
+    },
+    EMAILJS_PUBLIC_KEY
+  );
+
+  // Clear used verification code
+  verificationCodes.delete(data.email);
+
+  // Also store in database for admin access
+  try {
+    await api.post('/contact/send', data);
+  } catch {
+    // Don't fail the whole submission if DB storage fails — email was already sent
+    console.warn('Message sent via email but failed to store in database');
+  }
+};
+
+// Old function for backward compatibility (without verification)
+export const sendContactMessageDirect = async (data: ContactMessage): Promise<void> => {
   // Send email notification
   await emailjs.send(
     EMAILJS_SERVICE_ID,
