@@ -31,6 +31,19 @@ export default function App() {
   const [education, setEducation] = useState<educationService.Education[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch portfolio data
   useEffect(() => {
@@ -137,8 +150,14 @@ export default function App() {
         }}
       >
         <TiltedCard />
-        <div className="relative z-10 w-full h-screen flex items-center justify-center">
-          <AsciiText3D text="LEGAGNEUR" asciiFontSize={4} enableWaves={false} />
+        <div className="relative z-10 w-full h-screen flex items-center justify-center overflow-x-auto md:overflow-visible px-4 touch-pan-x">
+          <div className="min-w-max md:min-w-0">
+            <AsciiText3D 
+              text="LEGAGNEUR" 
+              asciiFontSize={isMobile ? 2 : 4} 
+              enableWaves={false} 
+            />
+          </div>
         </div>
         
         <motion.div
