@@ -4,6 +4,8 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "rewrites": [
+    { "source": "/Media/(.*)", "destination": "/Media/$1" },
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }

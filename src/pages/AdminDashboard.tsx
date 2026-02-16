@@ -6,7 +6,7 @@ import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
 import {
   ArrowLeft, Plus, Pencil, Trash2, Save, X, Shield,
-  Zap, Briefcase, Gamepad2, ChevronDown, FolderOpen, GraduationCap, FileText, MessageSquare, Eye, Star, Check, XCircle, Upload, Image as ImageIcon, Film, Loader2
+  Zap, Briefcase, Gamepad2, ChevronDown, ChevronLeft, ChevronRight, FolderOpen, GraduationCap, FileText, MessageSquare, Eye, Star, Check, XCircle, Upload, Image as ImageIcon, Film, Loader2
 } from 'lucide-react';
 import { supabase } from '../services/authService';
 import * as skillsService from '../services/skillsService';
@@ -110,10 +110,12 @@ const FileUploadField = ({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const doUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
+    setUploadError('');
     try {
       const token = localStorage.getItem('token');
       if (multiple) {
@@ -148,8 +150,9 @@ const FileUploadField = ({
         const fileUrl = data.url.startsWith('http') ? data.url : `${API_HOST}${data.url}`;
         onChange(name, fileUrl);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload error:', err);
+      setUploadError(err.message || 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -241,6 +244,11 @@ const FileUploadField = ({
           ✕ Remove
         </button>
       )}
+      {uploadError && (
+        <div className="text-[10px] mt-1 px-2 py-1 rounded" style={{ ...font, color: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)' }}>
+          ⚠ {uploadError}
+        </div>
+      )}
     </div>
   );
 };
@@ -274,6 +282,7 @@ export const AdminDashboard = () => {
   const [mobileTabsOpen, setMobileTabsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileActionMode, setMobileActionMode] = useState<'none' | 'edit' | 'delete'>('none');
+  const [mobileFormPanel, setMobileFormPanel] = useState<0 | 1>(0);
 
   // Detect mobile
   useEffect(() => {
@@ -396,6 +405,7 @@ export const AdminDashboard = () => {
     } else {
       setFormData({ name_en: '', description_en: '', icon_url: '', image_url: '', display_order: 0, is_active: true });
     }
+    setMobileFormPanel(0);
     setModalOpen(true);
   };
 
@@ -416,6 +426,7 @@ export const AdminDashboard = () => {
       else if (data[key] === null || data[key] === undefined) data[key] = '';
     });
     setFormData(data);
+    setMobileFormPanel(0);
     setModalOpen(true);
   };
 
@@ -561,87 +572,150 @@ export const AdminDashboard = () => {
       );
     }
     if (activeTab === 'experience') {
-      return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          {/* Left panel — Text content */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
-            <FormField label={t('f.company', 'Company', 'Entreprise')} name="company_name" value={formData.company_name} onChange={handleFieldChange} />
-            <FormField label={t('f.positionEn', 'Position', 'Poste')} name="position_en" value={formData.position_en} onChange={handleFieldChange} />
-            <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
-            <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
-          </div>
-          {/* Right panel — Details & settings */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
-            <FormField label={t('f.type', 'Type', 'Type')} name="employment_type" type="select" options={['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Self-Employed']} value={formData.employment_type} onChange={handleFieldChange} />
-            <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
-            <FileUploadField label={t('f.companyLogo', 'Company Logo', 'Logo entreprise')} name="company_logo_url" accept="image/*" value={formData.company_logo_url} onChange={handleFieldChange} />
-            <FormField label={t('f.companyWebsite', 'Company Website', 'Site web entreprise')} name="company_website" value={formData.company_website} onChange={handleFieldChange} />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
-              <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
-            </div>
-            <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label={t('f.currentlyWorking', 'Currently Working', 'Actuellement en poste')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
-              <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
-            </div>
-          </div>
+      const panelLeft = (
+        <div className="space-y-3">
+          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+          <FormField label={t('f.company', 'Company', 'Entreprise')} name="company_name" value={formData.company_name} onChange={handleFieldChange} />
+          <FormField label={t('f.positionEn', 'Position', 'Poste')} name="position_en" value={formData.position_en} onChange={handleFieldChange} />
+          <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
+          <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
         </div>
       );
-    }
-    if (activeTab === 'projects') {
-      return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          {/* Left panel — Text content */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
-            <FormField label={t('f.title', 'Title', 'Titre')} name="title_en" value={formData.title_en} onChange={handleFieldChange} />
-            <FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
-            <FormField label={t('f.technologies', 'Technologies (comma-separated)', 'Technologies (séparées par virgules)')} name="technologies" value={formData.technologies} onChange={handleFieldChange} />
-            <FormField label={t('f.category', 'Category', 'Catégorie')} name="category" value={formData.category} onChange={handleFieldChange} />
-            <FormField label={t('f.projectUrl', 'Project URL', 'URL du projet')} name="project_url" value={formData.project_url} onChange={handleFieldChange} />
-            <FormField label={t('f.githubUrl', 'GitHub URL', 'URL GitHub')} name="github_url" value={formData.github_url} onChange={handleFieldChange} />
+      const panelRight = (
+        <div className="space-y-3">
+          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
+          <FormField label={t('f.type', 'Type', 'Type')} name="employment_type" type="select" options={['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Self-Employed']} value={formData.employment_type} onChange={handleFieldChange} />
+          <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
+          <FileUploadField label={t('f.companyLogo', 'Company Logo', 'Logo entreprise')} name="company_logo_url" accept="image/*" value={formData.company_logo_url} onChange={handleFieldChange} />
+          <FormField label={t('f.companyWebsite', 'Company Website', 'Site web entreprise')} name="company_website" value={formData.company_website} onChange={handleFieldChange} />
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
+            <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
           </div>
-          {/* Right panel — Media & settings */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Media & Settings</T></div>
-            <FileUploadField label={t('f.coverMedia', 'Cover (Image or Video)', 'Couverture (image ou vidéo)')} name="image_url" accept="image/*,video/*" value={formData.image_url} onChange={(name: string, val: any) => { handleFieldChange(name, val); if (val) handleFieldChange('video_url', ''); }} />
-            <FileUploadField label={t('f.gallery', 'Gallery Images', 'Images de la galerie')} name="gallery_urls" accept="image/*" multiple value={formData.gallery_urls} onChange={handleFieldChange} />
+          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label={t('f.currentlyWorking', 'Currently Working', 'Actuellement en poste')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
             <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
           </div>
         </div>
       );
-    }
-    if (activeTab === 'education') {
+      if (isMobile) {
+        return (
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setMobileFormPanel(0)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 0 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronLeft size={24} /></button>
+              <span className="text-xs tracking-widest uppercase" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>{mobileFormPanel === 0 ? t('f.panelContent', 'Content', 'Contenu') : t('f.panelDetails', 'Details & Settings', 'Détails & Paramètres')} — {mobileFormPanel + 1}/2</span>
+              <button onClick={() => setMobileFormPanel(1)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 1 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronRight size={24} /></button>
+            </div>
+            {mobileFormPanel === 0 ? panelLeft : panelRight}
+          </div>
+        );
+      }
       return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          {/* Left panel — Text content */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
-            <FormField label={t('f.institution', 'Institution', 'Établissement')} name="institution_name" value={formData.institution_name} onChange={handleFieldChange} />
-            <FormField label={t('f.degreeEn', 'Degree', 'Diplôme')} name="degree_en" value={formData.degree_en} onChange={handleFieldChange} />
-            <FormField label={t('f.fieldEn', 'Field of Study', 'Domaine d\'études')} name="field_of_study_en" value={formData.field_of_study_en} onChange={handleFieldChange} />
-            <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
-            <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
-          </div>
-          {/* Right panel — Details & settings */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
-            <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
-            <FormField label={t('f.grade', 'Grade', 'Note')} name="grade" value={formData.grade} onChange={handleFieldChange} />
-            <FileUploadField label={t('f.logoUrl', 'Logo', 'Logo')} name="logo_url" accept="image/*" value={formData.logo_url} onChange={handleFieldChange} />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
-              <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
+          {panelLeft}
+          {panelRight}
+        </div>
+      );
+    }
+    if (activeTab === 'projects') {
+      const handleCoverUpload = (name: string, val: any) => {
+        if (val && typeof val === 'string') {
+          // Detect if uploaded file is a video by extension
+          const isVideo = /\.(mp4|webm|mov|avi)$/i.test(val);
+          if (isVideo) {
+            handleFieldChange('video_url', val);
+            handleFieldChange('image_url', '');
+          } else {
+            handleFieldChange('image_url', val);
+            handleFieldChange('video_url', '');
+          }
+        } else {
+          handleFieldChange(name, val);
+        }
+      };
+      const panelLeft = (
+        <div className="space-y-3">
+          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+          <FormField label={t('f.title', 'Title', 'Titre')} name="title_en" value={formData.title_en} onChange={handleFieldChange} />
+          <FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
+          <FormField label={t('f.technologies', 'Technologies (comma-separated)', 'Technologies (séparées par virgules)')} name="technologies" value={formData.technologies} onChange={handleFieldChange} />
+          <FormField label={t('f.category', 'Category', 'Catégorie')} name="category" value={formData.category} onChange={handleFieldChange} />
+          <FormField label={t('f.projectUrl', 'Project URL', 'URL du projet')} name="project_url" value={formData.project_url} onChange={handleFieldChange} />
+          <FormField label={t('f.githubUrl', 'GitHub URL', 'URL GitHub')} name="github_url" value={formData.github_url} onChange={handleFieldChange} />
+        </div>
+      );
+      const panelRight = (
+        <div className="space-y-3">
+          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Media & Settings</T></div>
+          <FileUploadField label={t('f.coverMedia', 'Cover (Image or Video)', 'Couverture (image ou vidéo)')} name="image_url" accept="image/*,video/*" value={formData.image_url || formData.video_url} onChange={handleCoverUpload} />
+          <FileUploadField label={t('f.gallery', 'Gallery Images', 'Images de la galerie')} name="gallery_urls" accept="image/*" multiple value={formData.gallery_urls} onChange={handleFieldChange} />
+          <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+        </div>
+      );
+      if (isMobile) {
+        return (
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setMobileFormPanel(0)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 0 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronLeft size={24} /></button>
+              <span className="text-xs tracking-widest uppercase" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>{mobileFormPanel === 0 ? t('f.panelContent', 'Content', 'Contenu') : t('f.panelMedia', 'Media & Settings', 'Médias & Paramètres')} — {mobileFormPanel + 1}/2</span>
+              <button onClick={() => setMobileFormPanel(1)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 1 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronRight size={24} /></button>
             </div>
-            <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label={t('f.currentlyEnrolled', 'Currently Enrolled', 'Actuellement inscrit')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
-              <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
-            </div>
+            {mobileFormPanel === 0 ? panelLeft : panelRight}
           </div>
+        );
+      }
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {panelLeft}
+          {panelRight}
+        </div>
+      );
+    }
+    if (activeTab === 'education') {
+      const panelLeft = (
+        <div className="space-y-3">
+          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+          <FormField label={t('f.institution', 'Institution', 'Établissement')} name="institution_name" value={formData.institution_name} onChange={handleFieldChange} />
+          <FormField label={t('f.degreeEn', 'Degree', 'Diplôme')} name="degree_en" value={formData.degree_en} onChange={handleFieldChange} />
+          <FormField label={t('f.fieldEn', 'Field of Study', 'Domaine d\'études')} name="field_of_study_en" value={formData.field_of_study_en} onChange={handleFieldChange} />
+          <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
+          <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
+        </div>
+      );
+      const panelRight = (
+        <div className="space-y-3">
+          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
+          <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
+          <FormField label={t('f.grade', 'Grade', 'Note')} name="grade" value={formData.grade} onChange={handleFieldChange} />
+          <FileUploadField label={t('f.logoUrl', 'Logo', 'Logo')} name="logo_url" accept="image/*" value={formData.logo_url} onChange={handleFieldChange} />
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
+            <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
+          </div>
+          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label={t('f.currentlyEnrolled', 'Currently Enrolled', 'Actuellement inscrit')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
+            <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+          </div>
+        </div>
+      );
+      if (isMobile) {
+        return (
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setMobileFormPanel(0)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 0 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronLeft size={24} /></button>
+              <span className="text-xs tracking-widest uppercase" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>{mobileFormPanel === 0 ? t('f.panelContent', 'Content', 'Contenu') : t('f.panelDetails', 'Details & Settings', 'Détails & Paramètres')} — {mobileFormPanel + 1}/2</span>
+              <button onClick={() => setMobileFormPanel(1)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 1 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronRight size={24} /></button>
+            </div>
+            {mobileFormPanel === 0 ? panelLeft : panelRight}
+          </div>
+        );
+      }
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {panelLeft}
+          {panelRight}
         </div>
       );
     }
