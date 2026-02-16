@@ -1,7 +1,9 @@
 import os
 import uuid
+import time
 import logging
 import httpx
+import jwt as pyjwt
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from app.auth import get_current_user
 
@@ -21,16 +23,44 @@ STORAGE_BUCKET = "portfolio-files"
 
 
 def _get_supabase_config():
-    """Get Supabase URL and key for storage operations."""
+    """
+    Get Supabase URL and a key that bypasses RLS for storage operations.
+
+    The SUPABASE_SERVICE_KEY may be in one of two formats:
+    1. A real service-role JWT (starts with 'eyJ') → use directly.
+    2. The JWT secret (e.g. 'sb_secret_...') → mint a short-lived service-role JWT.
+    Falls back to anon key (may hit RLS).
+    """
     url = os.getenv("SUPABASE_URL", "").rstrip("/")
-    # Prefer service key if it's a real JWT, otherwise use anon key
     service_key = os.getenv("SUPABASE_SERVICE_KEY", "")
     anon_key = os.getenv("SUPABASE_ANON_KEY", "")
-    key = service_key if service_key.startswith("eyJ") else anon_key
-    if not url or not key:
-        logger.error(f"Missing Supabase config: URL={'set' if url else 'MISSING'}, KEY={'set' if key else 'MISSING'}")
+
+    # 1) If service key is already a JWT, use it directly
+    if service_key.startswith("eyJ"):
+        return url, service_key
+
+    # 2) If it looks like a JWT secret (sb_secret_...), mint a service-role JWT
+    if service_key:
+        try:
+            now = int(time.time())
+            payload = {
+                "role": "service_role",
+                "iss": "supabase",
+                "iat": now,
+                "exp": now + 3600,  # 1 hour
+            }
+            token = pyjwt.encode(payload, service_key, algorithm="HS256")
+            logger.info("Minted service-role JWT from SUPABASE_SERVICE_KEY secret")
+            return url, token
+        except Exception as e:
+            logger.warning(f"Failed to mint service-role JWT: {e}")
+
+    # 3) Fallback to anon key
+    if not url or not anon_key:
+        logger.error(f"Missing Supabase config: URL={'set' if url else 'MISSING'}, KEY={'set' if anon_key else 'MISSING'}")
         return None, None
-    return url, key
+    logger.warning("Using anon key for storage — uploads may fail due to RLS policies")
+    return url, anon_key
 
 
 @router.post("")
@@ -75,7 +105,12 @@ async def upload_file(
         "Authorization": f"Bearer {supabase_key}",
         "apikey": supabase_key,
         "Content-Type": content_type,
+        "x-upsert": "true",           # overwrite if exists, avoids duplicate errors
     }
+
+    logger.info(f"Uploading {unique_name} ({len(contents)} bytes) to {STORAGE_BUCKET}")
+    logger.info(f"Key type: {'service-role JWT' if supabase_key.startswith('eyJ') and len(supabase_key) > 100 else 'anon key'}")
+
 
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:

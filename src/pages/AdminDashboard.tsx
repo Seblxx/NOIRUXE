@@ -172,8 +172,10 @@ const FileUploadField = ({
 
   // Check if existing value looks like image/video for preview
   const currentUrl = value ? String(value) : '';
-  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(currentUrl.split(',')[0]?.trim() || '');
-  const isVideo = /\.(mp4|webm|mov)$/i.test(currentUrl.split(',')[0]?.trim() || '');
+  const urlList = currentUrl.split(',').map((s: string) => s.trim()).filter(Boolean);
+  const firstUrl = urlList[0] || '';
+  const isImage = urlList.some((u: string) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(u));
+  const isVideo = /\.(mp4|webm|mov)$/i.test(firstUrl);
 
   return (
     <div>
@@ -211,32 +213,32 @@ const FileUploadField = ({
             {/* Thumbnail preview */}
             {isImage && (
               <div className="flex flex-wrap gap-1.5 max-h-[4.5rem] overflow-y-auto">
-                {currentUrl.split(',').map((u: string, i: number) => (
-                  <img key={i} src={u.trim()} alt="" className="h-10 w-10 object-cover rounded" />
+                {urlList.map((u: string, i: number) => (
+                  <img key={i} src={u} alt="" className="h-10 w-10 object-cover rounded border border-white/20" />
                 ))}
               </div>
             )}
             {isVideo && (
               <div className="flex items-center gap-2">
                 <Film size={16} style={{ color: '#22d3ee' }} />
-                <span className="text-xs text-white/60 truncate" style={font}>{currentUrl.split('/').pop()}</span>
+                <span className="text-xs text-white/60 truncate" style={font}>{firstUrl.split('/').pop()}</span>
               </div>
             )}
             {!isImage && !isVideo && (
               <div className="flex items-center gap-2">
                 <ImageIcon size={16} style={{ color: '#22d3ee' }} />
-                <span className="text-xs text-white/60 truncate" style={font}>{currentUrl.split('/').pop()}</span>
+                <span className="text-xs text-white/60 truncate" style={font}>{firstUrl.split('/').pop()}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
-              <Upload size={12} style={{ color: 'rgba(255,255,255,0.4)' }} />
-              <span className="text-[10px] text-white/40" style={font}>Click or drag to replace</span>
+              <Upload size={12} style={{ color: 'rgba(255,255,255,0.5)' }} />
+              <span className="text-[10px]" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>Click or drag to replace</span>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-2 gap-1">
-            <Upload size={20} style={{ color: 'rgba(255,255,255,0.3)' }} />
-            <span className="text-[10px] text-white/40" style={font}>{multiple ? 'Click or drag files' : 'Click or drag a file'}</span>
+          <div className="flex flex-col items-center justify-center py-3 gap-1.5">
+            <Upload size={22} style={{ color: 'rgba(255,255,255,0.5)' }} />
+            <span className="text-xs" style={{ ...font, color: 'rgba(255,255,255,0.6)' }}>{multiple ? 'Click or drag files' : 'Click or drag a file'}</span>
           </div>
         )}
       </div>
