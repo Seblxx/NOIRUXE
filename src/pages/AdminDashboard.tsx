@@ -420,7 +420,7 @@ export const AdminDashboard = () => {
     } else if (activeTab === 'projects') {
       setFormData({ title_en: '', description_en: '', image_url: '', video_url: '', gallery_urls: '', technologies: '', project_url: '', github_url: '', category: '', display_order: projects.length, is_active: true });
     } else if (activeTab === 'education') {
-      setFormData({ institution_name: '', degree_en: '', field_of_study_en: '', description_en: '', start_date: '', end_date: '', is_current: false, is_active: true });
+      setFormData({ institution_name: '', field_of_study_en: '', start_date: '', end_date: '', is_current: false, is_active: true });
     } else if (activeTab === 'resumes') {
       setFormData({ title_en: '', file_url: '', file_name: '', language: 'en', file_size: 0, is_active: true });
     } else if (activeTab === 'testimonials') {
@@ -662,9 +662,7 @@ export const AdminDashboard = () => {
       return (
         <div className="grid grid-cols-2 gap-3">
           <FormField label={t('f.institution', 'Institution', 'Établissement')} name="institution_name" value={formData.institution_name} onChange={handleFieldChange} />
-          <FormField label={t('f.degreeEn', 'Degree', 'Diplôme')} name="degree_en" value={formData.degree_en} onChange={handleFieldChange} />
           <FormField label={t('f.fieldEn', 'Field of Study', 'Domaine d\'études')} name="field_of_study_en" value={formData.field_of_study_en} onChange={handleFieldChange} />
-          <div className="col-span-2"><FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} /></div>
           <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
           <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
           <FormField label={t('f.currentlyEnrolled', 'Currently Enrolled', 'Actuellement inscrit')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />

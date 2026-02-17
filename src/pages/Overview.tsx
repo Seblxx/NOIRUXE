@@ -425,8 +425,9 @@ export const Overview = () => {
             <SectionHeader 
               icon={BookOpen} 
               title={language === 'fr' ? 'ÉDUCATION' : 'EDUCATION'}
+              current={eduIndex}
+              total={education.length}
               color={sectionColors.education.primary}
-              showCounter={false}
             />
             
             {loading ? (
@@ -438,54 +439,57 @@ export const Overview = () => {
                 <T>No education</T>
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar flex items-center justify-center">
-                <div className="space-y-6 py-2 w-full max-w-md mx-auto">
-                  {education.map((edu, idx) => (
-                    <div key={edu.id} className="text-center">
-                      <h3 
-                        className="text-xl md:text-2xl font-bold text-white leading-tight"
-                        style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                      >
-                        {language === 'fr' ? (edu.degree_fr || edu.degree_en) : edu.degree_en}
-                      </h3>
-                      <p 
-                        className="font-semibold text-base md:text-lg mt-1"
-                        style={{ color: sectionColors.education.primary }}
-                      >
-                        {edu.institution_name}
-                      </p>
-                      {(edu.field_of_study_en || edu.field_of_study_fr) && (
-                        <p className="text-white/50 text-base md:text-lg mt-0.5">
-                          {language === 'fr' ? (edu.field_of_study_fr || edu.field_of_study_en) : edu.field_of_study_en}
-                        </p>
-                      )}
-                      {edu.start_date && (
-                        <div className="flex items-center justify-center gap-2 text-white/60 text-sm md:text-base mt-2">
-                          <Calendar size={16} />
-                          <span>
-                            {formatDate(edu.start_date)} — {edu.is_current 
-                              ? (language === 'fr' ? 'Présent' : 'Present')
-                              : edu.end_date ? formatDate(edu.end_date) : '—'}
-                          </span>
-                          {edu.grade && (
-                            <span 
-                              className="ml-1 px-1.5 py-0.5 rounded text-xs"
-                              style={{ 
-                                backgroundColor: `${sectionColors.education.primary}20`,
-                                color: sectionColors.education.primary 
-                              }}
-                            >
-                              <T>GPA</T>: {edu.grade}
-                            </span>
+              <div className="flex-1 flex items-center gap-3">
+                {education.length > 1 && (
+                  <NavButton direction="left" onClick={() => navEdu(-1)} color={sectionColors.education.primary} />
+                )}
+                
+                <div className="flex-1 min-w-0 flex items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={eduIndex}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-full text-center"
+                    >
+                      {currentEdu && (
+                        <div className="space-y-3">
+                          <h3 
+                            className="text-xl md:text-2xl font-bold text-white"
+                            style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                          >
+                            {language === 'fr' ? (currentEdu.degree_fr || currentEdu.degree_en) : currentEdu.degree_en}
+                          </h3>
+                          <p 
+                            className="font-semibold text-base md:text-lg"
+                            style={{ color: sectionColors.education.primary }}
+                          >
+                            {currentEdu.institution_name}
+                          </p>
+                          {(currentEdu.field_of_study_en || currentEdu.field_of_study_fr) && (
+                            <p className="text-white/50 text-base md:text-lg">
+                              {language === 'fr' ? (currentEdu.field_of_study_fr || currentEdu.field_of_study_en) : currentEdu.field_of_study_en}
+                            </p>
                           )}
+                          <div className="flex items-center justify-center gap-2 text-white/60 text-sm md:text-base">
+                            <Calendar size={16} />
+                            <span>
+                              {formatDate(currentEdu.start_date)} — {currentEdu.is_current 
+                                ? (language === 'fr' ? 'Présent' : 'Present')
+                                : currentEdu.end_date ? formatDate(currentEdu.end_date) : '—'}
+                            </span>
+                          </div>
                         </div>
                       )}
-                      {idx < education.length - 1 && (
-                        <div className="mt-4 mx-auto w-16 h-px bg-white/10" />
-                      )}
-                    </div>
-                  ))}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
+
+                {education.length > 1 && (
+                  <NavButton direction="right" onClick={() => navEdu(1)} color={sectionColors.education.primary} />
+                )}
               </div>
             )}
           </div>
