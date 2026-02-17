@@ -430,19 +430,6 @@ export const Projects = () => {
                         
                         {/* Links */}
                         <div className="flex gap-3">
-                          {currentProject.project_url && (
-                            <a
-                              href={currentProject.project_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-2 px-4 py-2 bg-white text-black font-bold text-xs tracking-wider rounded hover:bg-white/90 transition-all"
-                              style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                            >
-                              <ExternalLink size={12} />
-                              <T>VIEW</T>
-                            </a>
-                          )}
                           {currentProject.github_url && (
                             <a
                               href={currentProject.github_url}
