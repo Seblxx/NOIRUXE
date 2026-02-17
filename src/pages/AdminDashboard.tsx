@@ -414,19 +414,19 @@ export const AdminDashboard = () => {
     setEditingId(null);
     setError('');
     if (activeTab === 'skills') {
-      setFormData({ name_en: '', category: 'Frontend', proficiency: 50, icon_url: '', display_order: 0, is_active: true });
+      setFormData({ name_en: '', category: 'Frontend', proficiency: 50, is_active: true });
     } else if (activeTab === 'experience') {
-      setFormData({ company_name: '', position_en: '', description_en: '', location: '', employment_type: 'Full-time', start_date: '', end_date: '', is_current: false, company_logo_url: '', company_website: '', achievements_en: '', display_order: 0, is_active: true });
+      setFormData({ company_name: '', position_en: '', description_en: '', start_date: '', end_date: '', is_current: false, is_active: true });
     } else if (activeTab === 'projects') {
       setFormData({ title_en: '', description_en: '', image_url: '', video_url: '', gallery_urls: '', technologies: '', project_url: '', github_url: '', category: '', display_order: projects.length, is_active: true });
     } else if (activeTab === 'education') {
-      setFormData({ institution_name: '', degree_en: '', field_of_study_en: '', description_en: '', location: '', start_date: '', end_date: '', is_current: false, grade: '', logo_url: '', achievements_en: '', display_order: 0, is_active: true });
+      setFormData({ institution_name: '', degree_en: '', field_of_study_en: '', description_en: '', start_date: '', end_date: '', is_current: false, is_active: true });
     } else if (activeTab === 'resumes') {
       setFormData({ title_en: '', file_url: '', file_name: '', language: 'en', file_size: 0, is_active: true });
     } else if (activeTab === 'testimonials') {
       setFormData({ author_name: '', author_email: '', author_position_en: '', author_company: '', author_image_url: '', testimonial_text_en: '', rating: 5, status: 'pending', display_order: 0 });
     } else {
-      setFormData({ name_en: '', description_en: '', icon_url: '', image_url: '', display_order: 0, is_active: true });
+      setFormData({ name_en: '', description_en: '', is_active: true });
     }
     setMobileFormPanel(0);
     setModalOpen(true);
@@ -588,56 +588,20 @@ export const AdminDashboard = () => {
           <FormField label={t('f.name', 'Name', 'Nom')} name="name_en" value={formData.name_en} onChange={handleFieldChange} />
           <FormField label={t('f.category', 'Category', 'Catégorie')} name="category" type="select" options={existingCategories} value={formData.category} onChange={handleFieldChange} />
           <FormField label={t('f.proficiency', 'Proficiency', 'Compétence')} name="proficiency" type="range" value={formData.proficiency} onChange={handleFieldChange} />
-          <FileUploadField label={t('f.iconUrl', 'Icon', 'Icône')} name="icon_url" accept="image/*" value={formData.icon_url} onChange={handleFieldChange} />
-          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
           <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
         </div>
       );
     }
     if (activeTab === 'experience') {
-      const panelLeft = (
-        <div className="space-y-3">
-          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+      return (
+        <div className="grid grid-cols-2 gap-3">
           <FormField label={t('f.company', 'Company', 'Entreprise')} name="company_name" value={formData.company_name} onChange={handleFieldChange} />
           <FormField label={t('f.positionEn', 'Position', 'Poste')} name="position_en" value={formData.position_en} onChange={handleFieldChange} />
-          <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
-          <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
-        </div>
-      );
-      const panelRight = (
-        <div className="space-y-3">
-          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
-          <FormField label={t('f.type', 'Type', 'Type')} name="employment_type" type="select" options={['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Self-Employed']} value={formData.employment_type} onChange={handleFieldChange} />
-          <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
-          <FileUploadField label={t('f.companyLogo', 'Company Logo', 'Logo entreprise')} name="company_logo_url" accept="image/*" value={formData.company_logo_url} onChange={handleFieldChange} />
-          <FormField label={t('f.companyWebsite', 'Company Website', 'Site web entreprise')} name="company_website" value={formData.company_website} onChange={handleFieldChange} />
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
-            <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
-          </div>
-          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label={t('f.currentlyWorking', 'Currently Working', 'Actuellement en poste')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
-            <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
-          </div>
-        </div>
-      );
-      if (isMobile) {
-        return (
-          <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setMobileFormPanel(0)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 0 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronLeft size={24} /></button>
-              <span className="text-xs tracking-widest uppercase" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>{mobileFormPanel === 0 ? t('f.panelContent', 'Content', 'Contenu') : t('f.panelDetails', 'Details & Settings', 'Détails & Paramètres')} — {mobileFormPanel + 1}/2</span>
-              <button onClick={() => setMobileFormPanel(1)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 1 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronRight size={24} /></button>
-            </div>
-            {mobileFormPanel === 0 ? panelLeft : panelRight}
-          </div>
-        );
-      }
-      return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          {panelLeft}
-          {panelRight}
+          <div className="col-span-2"><FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} /></div>
+          <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
+          <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
+          <FormField label={t('f.currentlyWorking', 'Currently Working', 'Actuellement en poste')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
+          <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
         </div>
       );
     }
@@ -695,49 +659,16 @@ export const AdminDashboard = () => {
       );
     }
     if (activeTab === 'education') {
-      const panelLeft = (
-        <div className="space-y-3">
-          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Content</T></div>
+      return (
+        <div className="grid grid-cols-2 gap-3">
           <FormField label={t('f.institution', 'Institution', 'Établissement')} name="institution_name" value={formData.institution_name} onChange={handleFieldChange} />
           <FormField label={t('f.degreeEn', 'Degree', 'Diplôme')} name="degree_en" value={formData.degree_en} onChange={handleFieldChange} />
           <FormField label={t('f.fieldEn', 'Field of Study', 'Domaine d\'études')} name="field_of_study_en" value={formData.field_of_study_en} onChange={handleFieldChange} />
-          <FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} />
-          <FormField label={t('f.achievementsEn', 'Achievements (comma-separated)', 'Réalisations (séparées par virgules)')} name="achievements_en" type="textarea" rows={2} value={formData.achievements_en} onChange={handleFieldChange} />
-        </div>
-      );
-      const panelRight = (
-        <div className="space-y-3">
-          <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ ...font, color: 'rgba(0,255,255,0.6)' }}><T>Details & Settings</T></div>
-          <FormField label={t('f.location', 'Location', 'Emplacement')} name="location" value={formData.location} onChange={handleFieldChange} />
-          <FormField label={t('f.grade', 'Grade', 'Note')} name="grade" value={formData.grade} onChange={handleFieldChange} />
-          <FileUploadField label={t('f.logoUrl', 'Logo', 'Logo')} name="logo_url" accept="image/*" value={formData.logo_url} onChange={handleFieldChange} />
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
-            <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
-          </div>
-          <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label={t('f.currentlyEnrolled', 'Currently Enrolled', 'Actuellement inscrit')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
-            <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
-          </div>
-        </div>
-      );
-      if (isMobile) {
-        return (
-          <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setMobileFormPanel(0)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 0 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronLeft size={24} /></button>
-              <span className="text-xs tracking-widest uppercase" style={{ ...font, color: 'rgba(255,255,255,0.5)' }}>{mobileFormPanel === 0 ? t('f.panelContent', 'Content', 'Contenu') : t('f.panelDetails', 'Details & Settings', 'Détails & Paramètres')} — {mobileFormPanel + 1}/2</span>
-              <button onClick={() => setMobileFormPanel(1)} className="p-2 rounded-lg transition-all" style={{ color: mobileFormPanel === 1 ? '#22d3ee' : 'rgba(255,255,255,0.3)' }}><ChevronRight size={24} /></button>
-            </div>
-            {mobileFormPanel === 0 ? panelLeft : panelRight}
-          </div>
-        );
-      }
-      return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          {panelLeft}
-          {panelRight}
+          <div className="col-span-2"><FormField label={t('f.descEn', 'Description', 'Description')} name="description_en" type="textarea" rows={3} value={formData.description_en} onChange={handleFieldChange} /></div>
+          <FormField label={t('f.startDate', 'Start Date', 'Date de début')} name="start_date" type="date" value={formData.start_date} onChange={handleFieldChange} />
+          <FormField label={t('f.endDate', 'End Date', 'Date de fin')} name="end_date" type="date" value={formData.end_date} onChange={handleFieldChange} />
+          <FormField label={t('f.currentlyEnrolled', 'Currently Enrolled', 'Actuellement inscrit')} name="is_current" type="checkbox" value={formData.is_current} onChange={handleFieldChange} />
+          <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
         </div>
       );
     }
@@ -772,11 +703,8 @@ export const AdminDashboard = () => {
     return (
       <div className="grid grid-cols-2 gap-3">
         <FormField label={t('f.name', 'Name', 'Nom')} name="name_en" value={formData.name_en} onChange={handleFieldChange} />
-        <FormField label={t('f.displayOrder', 'Display Order', 'Ordre d\'affichage')} name="display_order" type="number" value={formData.display_order} onChange={handleFieldChange} />
-        <div className="col-span-2"><FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={2} value={formData.description_en} onChange={handleFieldChange} /></div>
-        <FileUploadField label={t('f.icon', 'Icon', 'Icône')} name="icon_url" value={formData.icon_url} onChange={handleFieldChange} accept="image/*" />
-        <FileUploadField label={t('f.image', 'Image', 'Image')} name="image_url" value={formData.image_url} onChange={handleFieldChange} accept="image/*" />
         <FormField label={t('f.active', 'Active', 'Actif')} name="is_active" type="checkbox" value={formData.is_active} onChange={handleFieldChange} />
+        <div className="col-span-2"><FormField label={t('f.desc', 'Description', 'Description')} name="description_en" type="textarea" rows={2} value={formData.description_en} onChange={handleFieldChange} /></div>
       </div>
     );
   };
@@ -1367,7 +1295,7 @@ export const AdminDashboard = () => {
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 className="relative w-full flex flex-col"
                 style={{
-                  maxWidth: ['projects', 'experience', 'education', 'testimonials'].includes(activeTab) ? '64rem' : '36rem',
+                  maxWidth: ['projects', 'testimonials'].includes(activeTab) ? '64rem' : '36rem',
                   maxHeight: 'calc(100vh - 3rem)',
                   borderRadius: '0.75rem',
                   backgroundColor: 'rgba(10,10,10,0.98)',

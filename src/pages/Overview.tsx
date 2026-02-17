@@ -387,7 +387,7 @@ export const Overview = () => {
                               : <T>{currentExp.company_name}</T>}
                           </p>
                           
-                          <div className="flex items-center justify-center gap-2 text-white/40 text-sm md:text-base">
+                          <div className="flex items-center justify-center gap-2 text-white/60 text-sm md:text-base">
                             <Calendar size={16} />
                             <span>
                               {formatDate(currentExp.start_date)} — {currentExp.is_current 
