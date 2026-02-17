@@ -687,20 +687,6 @@ export const Testimonials = () => {
                                   <X size={18} />
                                 </button>
                               )}
-                              <button
-                                onClick={() => handleDelete(t.id)}
-                                disabled={actionLoading === t.id}
-                                className="flex items-center justify-center p-2.5 rounded-lg disabled:opacity-50 transition-all"
-                                style={{
-                                  fontFamily: "'GT Pressura', sans-serif",
-                                  color: '#f87171',
-                                  backgroundColor: 'rgba(248,113,113,0.1)',
-                                  border: '1px solid rgba(248,113,113,0.3)',
-                                }}
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
                             </div>
                           </div>
                         </motion.div>

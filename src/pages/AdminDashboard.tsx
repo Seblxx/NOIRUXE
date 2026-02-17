@@ -1256,14 +1256,16 @@ export const AdminDashboard = () => {
                                 <Pencil size={20} />
                               </button>
                             )}
-                            <button
-                              onClick={() => setDeleteId(item.id)}
-                              className="p-2 rounded-lg transition-all"
-                              style={{ color: '#f87171', backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}
-                              title={language === 'fr' ? 'Supprimer' : 'Delete'}
-                            >
-                              <Trash2 size={20} />
-                            </button>
+                            {activeTab !== 'testimonials' && (
+                              <button
+                                onClick={() => setDeleteId(item.id)}
+                                className="p-2 rounded-lg transition-all"
+                                style={{ color: '#f87171', backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}
+                                title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                              >
+                                <Trash2 size={20} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
