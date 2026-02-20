@@ -166,10 +166,6 @@ export const Login = () => {
         setAwaitingTwoFactor(true);
         setTwoFactorMode(true);
         setError('');
-        
-        // For development: show code in console
-        console.log(`🔐 Your verification code is: ${code}`);
-        alert(`For development: Your 2FA code is ${code}\n\nIn production, this would be sent to your email.`);
       } else {
         // No 2FA required or not yet enforced, proceed with login
         clearFailedAttempts(email);

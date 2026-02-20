@@ -1,4 +1,5 @@
 // Authentication security utilities
+import emailjs from '@emailjs/browser';
 
 const RATE_LIMIT_KEY = 'login_attempts';
 const LOCKOUT_KEY = 'login_lockout_until';
@@ -6,9 +7,14 @@ const SESSION_ACTIVITY_KEY = 'last_activity';
 const TWO_FA_CODE_KEY = 'two_fa_code';
 const ACCOUNT_CREATED_KEY = 'account_created_at';
 
+// EmailJS configuration (same as contact form)
+const EMAILJS_SERVICE_ID = 'service_ds5co9t';
+const EMAILJS_VERIFICATION_TEMPLATE_ID = 'template_q4jp97z';
+const EMAILJS_PUBLIC_KEY = 'QVGjsCgwvtrQV1XXH';
+
 const MAX_ATTEMPTS = 7;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-const SESSION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes (for testing)
+const SESSION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes (for testing - change to 3 * 60 * 60 * 1000 for production)
 const TWO_FA_GRACE_PERIOD_MS = 10 * 1000; // 10 seconds (for testing - change to 7 * 24 * 60 * 60 * 1000 for production)
 
 // Rate limiting for login attempts
@@ -141,18 +147,32 @@ export const isTwoFactorRequired = (userEmail: string): boolean => {
   return accountAge > TWO_FA_GRACE_PERIOD_MS; // Required after grace period
 };
 
-// Send 2FA code via Supabase email (using password reset email as template)
+// Send 2FA code via email
 export const sendTwoFactorEmail = async (email: string, code: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Use a simple API call or Supabase function to send email
-    // For now, we'll use the frontend to show the code (in production, use a backend service)
-    console.log(`2FA Code for ${email}: ${code}`);
-    
-    // Store the code
+    // Store the code locally
     storeTwoFactorCode(email, code);
+    
+    // Send via EmailJS using existing One-Time Password template
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_VERIFICATION_TEMPLATE_ID,
+      {
+        email: email,
+        to_name: email.split('@')[0], // Use email username as name
+        verification_code: code,
+      },
+      EMAILJS_PUBLIC_KEY
+    );
+    
+    // Log success in development
+    if (import.meta.env.DEV) {
+      console.log(`✅ 2FA email sent to ${email} with code: ${code}`);
+    }
     
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error('Failed to send 2FA email:', error);
+    return { success: false, error: error.message || 'Failed to send verification email' };
   }
 };

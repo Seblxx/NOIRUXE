@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/authService';
 import { checkSessionTimeout, updateSessionActivity, clearSession } from '../utils/authSecurity';
@@ -7,6 +7,7 @@ const ACTIVITY_CHECK_INTERVAL = 60000; // Check every minute
 
 export const useSessionTimeout = () => {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     // Track user activity
@@ -29,8 +30,7 @@ export const useSessionTimeout = () => {
         // Session has timed out
         clearSession();
         await supabase.auth.signOut();
-        alert('Your session has expired due to inactivity. Please login again.');
-        navigate('/login');
+        setShowModal(true);
       }
     }, ACTIVITY_CHECK_INTERVAL);
 
@@ -42,4 +42,14 @@ export const useSessionTimeout = () => {
       clearInterval(timeoutChecker);
     };
   }, [navigate]);
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    navigate('/login');
+  };
+
+  return {
+    showSessionTimeoutModal: showModal,
+    closeSessionTimeoutModal: handleModalClose,
+  };
 };

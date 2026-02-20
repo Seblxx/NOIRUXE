@@ -5,6 +5,7 @@ import { AsciiText3D } from './components/AsciiText3D';
 import { CustomCursor } from './components/CustomCursor';
 import { SimpleMenu } from './components/SimpleMenu';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { SecurityModal } from './components/SecurityModal';
 import * as skillsService from './services/skillsService';
 import * as projectsService from './services/projectsService';
 import * as workExperienceService from './services/workExperienceService';
@@ -28,7 +29,7 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   
   // Session timeout monitoring
-  useSessionTimeout();
+  const { showSessionTimeoutModal, closeSessionTimeoutModal } = useSessionTimeout();
   
   // HTTPS enforcement in production
   useHTTPSEnforcement();
@@ -176,6 +177,16 @@ export default function App() {
           {t('home.explore', 'Explore', 'Explorer')}
         </motion.div>
       </section>
+
+      {/* Session timeout modal */}
+      <SecurityModal
+        isOpen={showSessionTimeoutModal}
+        type="warning"
+        title="Session Expired"
+        message="Your session has expired due to inactivity. Please login again."
+        buttonText="Back to Login"
+        onClose={closeSessionTimeoutModal}
+      />
     </div>
   );
 }
