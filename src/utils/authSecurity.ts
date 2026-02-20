@@ -8,8 +8,8 @@ const ACCOUNT_CREATED_KEY = 'account_created_at';
 
 const MAX_ATTEMPTS = 7;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-const SESSION_TIMEOUT_MS = 3 * 60 * 60 * 1000; // 3 hours
-const TWO_FA_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+const SESSION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes (for testing)
+const TWO_FA_GRACE_PERIOD_MS = 10 * 1000; // 10 seconds (for testing - change to 7 * 24 * 60 * 60 * 1000 for production)
 
 // Rate limiting for login attempts
 export const checkRateLimit = (email: string): { allowed: boolean; remainingAttempts?: number; lockoutMinutes?: number } => {
@@ -138,7 +138,7 @@ export const isTwoFactorRequired = (userEmail: string): boolean => {
   }
   
   const accountAge = Date.now() - parseInt(created);
-  return accountAge > TWO_FA_GRACE_PERIOD_MS; // Required after 1 week
+  return accountAge > TWO_FA_GRACE_PERIOD_MS; // Required after grace period
 };
 
 // Send 2FA code via Supabase email (using password reset email as template)
