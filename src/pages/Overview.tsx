@@ -153,6 +153,13 @@ export const Overview = () => {
   const [expIndex, setExpIndex] = useState(0);
   const [eduIndex, setEduIndex] = useState(0);
   const [hobbyIndex, setHobbyIndex] = useState(0);
+  
+  // Last interaction times for each section (for auto-carousel)
+  const [lastSkillInteraction, setLastSkillInteraction] = useState<number>(0);
+  const [lastExpInteraction, setLastExpInteraction] = useState<number>(0);
+  const [lastEduInteraction, setLastEduInteraction] = useState<number>(0);
+  const [lastHobbyInteraction, setLastHobbyInteraction] = useState<number>(0);
+  
   const { menuItems } = useMenuItems();
 
   useEffect(() => {
@@ -185,24 +192,84 @@ export const Overview = () => {
   }, {} as Record<string, skillsService.Skill[]>);
   const categories = Object.entries(groupedSkills);
 
-  // Navigation functions
+  // Auto-carousel for Skills - restart after 8 seconds of no interaction
+  useEffect(() => {
+    if (categories.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      const timeSinceLastInteraction = Date.now() - lastSkillInteraction;
+      if (timeSinceLastInteraction >= 8000 || lastSkillInteraction === 0) {
+        setSkillCatIndex((prev) => (prev + 1) % categories.length);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [categories.length, lastSkillInteraction]);
+
+  // Auto-carousel for Experience - restart after 8 seconds of no interaction
+  useEffect(() => {
+    if (experiences.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      const timeSinceLastInteraction = Date.now() - lastExpInteraction;
+      if (timeSinceLastInteraction >= 8000 || lastExpInteraction === 0) {
+        setExpIndex((prev) => (prev + 1) % experiences.length);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [experiences.length, lastExpInteraction]);
+
+  // Auto-carousel for Education - restart after 8 seconds of no interaction
+  useEffect(() => {
+    if (education.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      const timeSinceLastInteraction = Date.now() - lastEduInteraction;
+      if (timeSinceLastInteraction >= 8000 || lastEduInteraction === 0) {
+        setEduIndex((prev) => (prev + 1) % education.length);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [education.length, lastEduInteraction]);
+
+  // Auto-carousel for Hobbies - restart after 8 seconds of no interaction
+  useEffect(() => {
+    if (hobbies.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      const timeSinceLastInteraction = Date.now() - lastHobbyInteraction;
+      if (timeSinceLastInteraction >= 8000 || lastHobbyInteraction === 0) {
+        setHobbyIndex((prev) => (prev + 1) % hobbies.length);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [hobbies.length, lastHobbyInteraction]);
+
+  // Navigation functions with interaction tracking
   const navSkill = (dir: number) => {
     if (categories.length <= 1) return;
+    setLastSkillInteraction(Date.now());
     setSkillCatIndex((prev) => (prev + dir + categories.length) % categories.length);
   };
   
   const navExp = (dir: number) => {
     if (experiences.length <= 1) return;
+    setLastExpInteraction(Date.now());
     setExpIndex((prev) => (prev + dir + experiences.length) % experiences.length);
   };
   
   const navEdu = (dir: number) => {
     if (education.length <= 1) return;
+    setLastEduInteraction(Date.now());
     setEduIndex((prev) => (prev + dir + education.length) % education.length);
   };
   
   const navHobby = (dir: number) => {
     if (hobbies.length <= 1) return;
+    setLastHobbyInteraction(Date.now());
     setHobbyIndex((prev) => (prev + dir + hobbies.length) % hobbies.length);
   };
 

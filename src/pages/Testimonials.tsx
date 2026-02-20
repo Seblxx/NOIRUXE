@@ -149,6 +149,7 @@ export const Testimonials = () => {
   const [approvedTestimonials, setApprovedTestimonials] = useState<Testimonial[]>([]);
   const [loadingPublic, setLoadingPublic] = useState(true);
   const [publicPage, setPublicPage] = useState(0);
+  const [lastPublicInteraction, setLastPublicInteraction] = useState<number>(0);
 
   // Admin testimonials
   const [allTestimonials, setAllTestimonials] = useState<Testimonial[]>([]);
@@ -226,18 +227,21 @@ export const Testimonials = () => {
     }
   }, [isAdmin, adminFilter]);
 
-  // Auto-carousel for public testimonials - switch every 3 seconds
+  // Auto-carousel for public testimonials - restart after 8 seconds of no interaction
   useEffect(() => {
     if (activeTab === 'public' && approvedTestimonials.length > ITEMS_PER_PAGE) {
       const interval = setInterval(() => {
-        setPublicPage((prev) => {
-          const totalPages = Math.max(1, Math.ceil(approvedTestimonials.length / ITEMS_PER_PAGE));
-          return (prev + 1) % totalPages;
-        });
+        const timeSinceLastInteraction = Date.now() - lastPublicInteraction;
+        if (timeSinceLastInteraction >= 8000 || lastPublicInteraction === 0) {
+          setPublicPage((prev) => {
+            const totalPages = Math.max(1, Math.ceil(approvedTestimonials.length / ITEMS_PER_PAGE));
+            return (prev + 1) % totalPages;
+          });
+        }
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [activeTab, approvedTestimonials.length]);
+  }, [activeTab, approvedTestimonials.length, lastPublicInteraction]);
 
   const loadAdminTestimonials = async () => {
     try {
@@ -450,7 +454,10 @@ export const Testimonials = () => {
                   {/* Left Arrow */}
                   {publicTotalPages > 1 && (
                     <motion.button
-                      onClick={() => setPublicPage((prev) => (prev - 1 + publicTotalPages) % publicTotalPages)}
+                      onClick={() => {
+                        setLastPublicInteraction(Date.now());
+                        setPublicPage((prev) => (prev - 1 + publicTotalPages) % publicTotalPages);
+                      }}
                       whileHover={{ scale: 1.1, x: -3 }}
                       whileTap={{ scale: 0.95 }}
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all"
@@ -495,7 +502,10 @@ export const Testimonials = () => {
                   {/* Right Arrow */}
                   {publicTotalPages > 1 && (
                     <motion.button
-                      onClick={() => setPublicPage((prev) => (prev + 1) % publicTotalPages)}
+                      onClick={() => {
+                        setLastPublicInteraction(Date.now());
+                        setPublicPage((prev) => (prev + 1) % publicTotalPages);
+                      }}
                       whileHover={{ scale: 1.1, x: 3 }}
                       whileTap={{ scale: 0.95 }}
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all"
@@ -528,7 +538,10 @@ export const Testimonials = () => {
                     {Array.from({ length: publicTotalPages }).map((_, i) => (
                       <button
                         key={i}
-                        onClick={() => setPublicPage(i)}
+                        onClick={() => {
+                          setLastPublicInteraction(Date.now());
+                          setPublicPage(i);
+                        }}
                         className="rounded-full transition-all"
                         style={{
                           width: i === publicPage ? '1.5rem' : '0.5rem',

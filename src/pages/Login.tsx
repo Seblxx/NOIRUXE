@@ -4,9 +4,21 @@ import { motion } from 'motion/react';
 import { supabase } from '../services/authService';
 import { CustomCursor } from '../components/CustomCursor';
 import { TiltedCard } from '../components/TiltedCard';
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
 import { T } from '../components/Translate';
 import { useLanguage } from '../contexts/LanguageContext';
+import { 
+  checkRateLimit, 
+  recordFailedAttempt, 
+  clearFailedAttempts,
+  isTwoFactorRequired,
+  generateTwoFactorCode,
+  sendTwoFactorEmail,
+  verifyTwoFactorCode,
+  clearTwoFactorCode
+} from '../utils/authSecurity';
+
+const MAX_ATTEMPTS = 7;
 
 // Glitch text component for LOGIN title
 const GlitchText = ({ text }: { text: string }) => {
@@ -74,6 +86,9 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [twoFactorMode, setTwoFactorMode] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [awaitingTwoFactor, setAwaitingTwoFactor] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Check if already logged in - redirect to home
@@ -94,12 +109,72 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // If in 2FA mode, verify the code
+      if (twoFactorMode) {
+        const result = verifyTwoFactorCode(email, twoFactorCode);
+        if (!result.valid) {
+          setError(result.error || 'Invalid verification code');
+          setLoading(false);
+          return;
+        }
+        
+        // Code is valid, complete login
+        clearFailedAttempts(email);
+        navigate('/');
+        return;
+      }
+
+      // Check rate limiting
+      const rateCheck = checkRateLimit(email);
+      if (!rateCheck.allowed) {
+        setError(`Too many failed attempts. Please try again in ${rateCheck.lockoutMinutes} minutes.`);
+        setLoading(false);
+        return;
+      }
+
+      // Attempt login
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-      if (signInError) throw signInError;
-      navigate('/');
+      
+      if (signInError) {
+        recordFailedAttempt(email);
+        const remaining = (rateCheck.remainingAttempts || MAX_ATTEMPTS) - 1;
+        if (remaining > 0) {
+          setError(`Invalid credentials. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`);
+        } else {
+          setError('Too many failed attempts. Account locked for 15 minutes.');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Login successful, check if 2FA is required
+      if (data.user && isTwoFactorRequired(email)) {
+        // Generate and send 2FA code
+        const code = generateTwoFactorCode();
+        const sendResult = await sendTwoFactorEmail(email, code);
+        
+        if (!sendResult.success) {
+          setError('Failed to send verification code. Please try again.');
+          setLoading(false);
+          return;
+        }
+        
+        // Show 2FA input
+        setAwaitingTwoFactor(true);
+        setTwoFactorMode(true);
+        setError('');
+        
+        // For development: show code in console
+        console.log(`🔐 Your verification code is: ${code}`);
+        alert(`For development: Your 2FA code is ${code}\n\nIn production, this would be sent to your email.`);
+      } else {
+        // No 2FA required or not yet enforced, proceed with login
+        clearFailedAttempts(email);
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err.message || t('login.error', 'An error occurred', 'Une erreur est survenue'));
     } finally {
@@ -223,68 +298,114 @@ export const Login = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-3 rounded-lg border border-red-500/50 bg-red-500/10 text-red-400 text-sm text-center"
+              className="mb-6 p-3 rounded-lg border border-red-500/50 bg-red-500/10 text-white text-sm text-center"
               style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
               {error}
             </motion.div>
           )}
 
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+          {awaitingTwoFactor && !error && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-3 rounded-lg border border-blue-500/50 bg-blue-500/10 text-blue-400 text-sm text-center flex items-center justify-center gap-2"
+              style={{ fontFamily: "'GT Pressura', sans-serif" }}
             >
-              <label 
-                className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
-                style={{ fontFamily: "'GT Pressura', sans-serif" }}
-              >
-                <T>Email</T>
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
-                style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                placeholder="your@email.com"
-                autoComplete="email"
-              />
+              <Shield size={16} />
+              <span>Verification code sent to your email</span>
             </motion.div>
+          )}
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <label 
-                className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
-                style={{ fontFamily: "'GT Pressura', sans-serif" }}
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            {twoFactorMode ? (
+              // 2FA Code Input
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
               >
-                <T>Password</T>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all pr-12"
+                <label 
+                  className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </motion.div>
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  maxLength={6}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-2xl text-center tracking-[0.5em] placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                  placeholder="000000"
+                  autoComplete="off"
+                  autoFocus
+                />
+                <p className="text-xs text-white/40 mt-2 text-center">
+                  Enter the 6-digit code sent to {email}
+                </p>
+              </motion.div>
+            ) : (
+              // Regular Login Fields
+              <>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label 
+                    className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
+                    style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                  >
+                    <T>Email</T>
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                    style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                    placeholder="your@email.com"
+                    autoComplete="email"
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <label 
+                    className="block text-xs text-white/50 mb-2 tracking-[0.2em] uppercase"
+                    style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                  >
+                    <T>Password</T>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-base placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all pr-12"
+                      style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -298,8 +419,29 @@ export const Login = () => {
                 className="group relative w-full py-4 bg-white text-black font-bold tracking-[0.2em] uppercase text-sm rounded-lg hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                 style={{ fontFamily: "'GT Pressura', sans-serif" }}
               >
-                {loading ? <T>Signing in...</T> : <T>Sign In</T>}
+                {loading ? (
+                  twoFactorMode ? 'Verifying...' : <T>Signing in...</T>
+                ) : (
+                  twoFactorMode ? 'Verify Code' : <T>Sign In</T>
+                )}
               </button>
+              
+              {twoFactorMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTwoFactorMode(false);
+                    setAwaitingTwoFactor(false);
+                    setTwoFactorCode('');
+                    clearTwoFactorCode();
+                    setError('');
+                  }}
+                  className="w-full mt-4 text-white/50 hover:text-white text-xs tracking-[0.15em] uppercase transition-colors"
+                  style={{ fontFamily: "'GT Pressura', sans-serif" }}
+                >
+                  Back to Login
+                </button>
+              )}
             </motion.div>
           </form>
         </motion.div>

@@ -14,6 +14,8 @@ import { supabase } from './services/authService';
 import { User } from '@supabase/supabase-js';
 import { useScrollAnimations } from './hooks/useScrollAnimations';
 import { useLanguage } from './contexts/LanguageContext';
+import { useSessionTimeout } from './hooks/useSessionTimeout';
+import { useHTTPSEnforcement } from './hooks/useHTTPSEnforcement';
 
 type Section = 'home' | 'about' | 'skills' | 'projects' | 'experience' | 'education' | 'contact';
 
@@ -24,6 +26,12 @@ export default function App() {
   const [isHomeSection, setIsHomeSection] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+  
+  // Session timeout monitoring
+  useSessionTimeout();
+  
+  // HTTPS enforcement in production
+  useHTTPSEnforcement();
   
   // Portfolio data state
   const [skills, setSkills] = useState<skillsService.Skill[]>([]);
@@ -142,8 +150,8 @@ export default function App() {
         onClick={(e) => {
           // Only navigate if not clicking on menu or other interactive elements
           const target = e.target as HTMLElement;
-          if (!target.closest('button') && !target.closest('a') && !target.closest('[role="menu"]') && !user) {
-            navigate('/login');
+          if (!target.closest('button') && !target.closest('a') && !target.closest('[role="menu"]')) {
+            navigate('/projects');
           }
         }}
       >
