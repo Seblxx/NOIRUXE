@@ -366,7 +366,7 @@ export const Testimonials = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-3 text-center flex-shrink-0"
+          className="mb-8 text-center flex-shrink-0"
         >
           <h1
             className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-none"
@@ -388,7 +388,7 @@ export const Testimonials = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex gap-2 mb-2 flex-shrink-0"
+            className="flex gap-2 mb-6 flex-shrink-0"
           >
             <button
               onClick={() => setActiveTab('public')}
@@ -419,7 +419,7 @@ export const Testimonials = () => {
 
         {/* ==================== PUBLIC VIEW ==================== */}
         {activeTab === 'public' && (
-          <div className="w-full max-w-5xl flex flex-col min-h-0 flex-1">
+          <div className="w-full max-w-5xl flex flex-col min-h-0">
             {loadingPublic ? (
               <div className="flex-1 flex justify-center items-center">
                 <div className="w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full animate-spin" />
@@ -446,7 +446,7 @@ export const Testimonials = () => {
             ) : (
               <>
                 {/* Cards with arrows */}
-                <div className="flex items-center gap-3 min-h-0 flex-1 overflow-hidden">
+                <div className="flex items-center gap-3 min-h-0 overflow-hidden mb-4">
                   {/* Left Arrow */}
                   {publicTotalPages > 1 && (
                     <motion.button
@@ -507,7 +507,7 @@ export const Testimonials = () => {
                 </div>
 
                 {/* Write a Testimonial button - placed right after the carousel */}
-                <div className="flex justify-center mt-3 flex-shrink-0">
+                <div className="flex justify-center mb-4 flex-shrink-0">
                   {!showForm && !submitSuccess && (
                     <motion.button
                       onClick={() => setShowForm(true)}
@@ -524,7 +524,7 @@ export const Testimonials = () => {
 
                 {/* Page indicator */}
                 {publicTotalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-3 flex-shrink-0">
+                  <div className="flex justify-center gap-2 flex-shrink-0">
                     {Array.from({ length: publicTotalPages }).map((_, i) => (
                       <button
                         key={i}
