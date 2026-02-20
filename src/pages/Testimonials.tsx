@@ -359,8 +359,8 @@ export const Testimonials = () => {
       {/* Menu */}
       <SimpleMenu items={menuItems} isExpanded={true} />
 
-      {/* Main content - fixed viewport, no scroll, vertically centered */}
-      <div className="relative z-10 h-screen flex flex-col items-center justify-center px-4 py-6 pt-16">
+      {/* Main content - fixed viewport, no scroll, with top spacing */}
+      <div className="relative z-10 h-screen flex flex-col items-center justify-start px-4 pt-32 pb-6">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
