@@ -226,6 +226,19 @@ export const Testimonials = () => {
     }
   }, [isAdmin, adminFilter]);
 
+  // Auto-carousel for public testimonials - switch every 3 seconds
+  useEffect(() => {
+    if (activeTab === 'public' && approvedTestimonials.length > ITEMS_PER_PAGE) {
+      const interval = setInterval(() => {
+        setPublicPage((prev) => {
+          const totalPages = Math.max(1, Math.ceil(approvedTestimonials.length / ITEMS_PER_PAGE));
+          return (prev + 1) % totalPages;
+        });
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, approvedTestimonials.length]);
+
   const loadAdminTestimonials = async () => {
     try {
       setLoadingAdmin(true);
@@ -347,7 +360,7 @@ export const Testimonials = () => {
       <SimpleMenu items={menuItems} isExpanded={true} />
 
       {/* Main content - fixed viewport, no scroll, vertically centered */}
-      <div className="relative z-10 h-screen flex flex-col items-center justify-center px-4 py-6">
+      <div className="relative z-10 h-screen flex flex-col items-center justify-center px-4 py-6 pt-16">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -426,7 +439,7 @@ export const Testimonials = () => {
                     style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
                   >
                     <MessageSquareQuote size={18} />
-                    <span className="text-sm uppercase tracking-widest"><T>Write a Testimonial</T></span>
+                    <span className="text-sm uppercase tracking-widest"><T>Write</T></span>
                   </motion.button>
                 )}
               </div>
@@ -441,7 +454,7 @@ export const Testimonials = () => {
                       whileHover={{ scale: 1.1, x: -3 }}
                       whileTap={{ scale: 0.95 }}
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all"
-                      style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
+                      style={{ border: '1px solid rgba(255,255,255,0.3)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#ffffff' }}
                     >
                       <ChevronLeft size={24} />
                     </motion.button>
@@ -486,16 +499,32 @@ export const Testimonials = () => {
                       whileHover={{ scale: 1.1, x: 3 }}
                       whileTap={{ scale: 0.95 }}
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all"
-                      style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
+                      style={{ border: '1px solid rgba(255,255,255,0.3)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#ffffff' }}
                     >
                       <ChevronRight size={24} />
                     </motion.button>
                   )}
                 </div>
 
+                {/* Write a Testimonial button - placed right after the carousel */}
+                <div className="flex justify-center mt-3 flex-shrink-0">
+                  {!showForm && !submitSuccess && (
+                    <motion.button
+                      onClick={() => setShowForm(true)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 py-3 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-3"
+                      style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
+                    >
+                      <MessageSquareQuote size={18} />
+                      <span className="text-sm uppercase tracking-widest"><T>Write</T></span>
+                    </motion.button>
+                  )}
+                </div>
+
                 {/* Page indicator */}
                 {publicTotalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-2 flex-shrink-0">
+                  <div className="flex justify-center gap-2 mt-3 flex-shrink-0">
                     {Array.from({ length: publicTotalPages }).map((_, i) => (
                       <button
                         key={i}
@@ -504,28 +533,12 @@ export const Testimonials = () => {
                         style={{
                           width: i === publicPage ? '1.5rem' : '0.5rem',
                           height: '0.5rem',
-                          backgroundColor: i === publicPage ? '#22d3ee' : 'rgba(255,255,255,0.2)',
+                          backgroundColor: i === publicPage ? '#ffffff' : 'rgba(255,255,255,0.2)',
                         }}
                       />
                     ))}
                   </div>
                 )}
-
-                {/* Write a Testimonial button */}
-                <div className="flex justify-center mt-2 flex-shrink-0">
-                  {!showForm && !submitSuccess && (
-                    <motion.button
-                      onClick={() => setShowForm(true)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2"
-                      style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
-                    >
-                      <MessageSquareQuote size={14} />
-                      <span className="text-xs uppercase tracking-widest"><T>Write a Testimonial</T></span>
-                    </motion.button>
-                  )}
-                </div>
               </>
             )}
 
@@ -769,7 +782,7 @@ export const Testimonials = () => {
                   </button>
 
                   <h3 className="text-white text-xl mb-8 tracking-widest uppercase text-center" style={{ fontFamily: "'GT Pressura', sans-serif" }}>
-                    <T>Write a Testimonial</T>
+                    <T>Write</T>
                   </h3>
 
                   {submitError && (
