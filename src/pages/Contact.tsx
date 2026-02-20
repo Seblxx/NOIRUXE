@@ -141,7 +141,7 @@ export const Contact = () => {
     setError('');
     
     if (!isVerified) {
-      setError(language === 'fr' ? 'Veuillez vérifier votre courriel d\'abord.' : 'Please verify your email first.');
+      setError(language === 'fr' ? 'Vous devez vérifier votre courriel !' : 'You must verify your email!');
       return;
     }
 
@@ -506,8 +506,8 @@ export const Contact = () => {
                 >
                   <button
                     type="submit"
-                    disabled={loading || !isVerified}
-                    className="group relative w-full py-4 bg-white text-black font-bold tracking-[0.2em] uppercase text-sm rounded-lg hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden flex items-center justify-center gap-2"
+                    disabled={loading}
+                    className="group relative w-full py-4 bg-white text-black font-bold tracking-[0.2em] uppercase text-sm rounded-lg hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden flex items-center justify-center gap-2 cursor-pointer"
                     style={{ fontFamily: "'GT Pressura', sans-serif" }}
                   >
                     <span>{loading ? <T>Sending...</T> : <T>Send Message</T>}</span>

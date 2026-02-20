@@ -136,7 +136,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 3;
 
 export const Testimonials = () => {
   const navigate = useNavigate();
