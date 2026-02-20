@@ -14,8 +14,8 @@ const EMAILJS_PUBLIC_KEY = 'QVGjsCgwvtrQV1XXH';
 
 const MAX_ATTEMPTS = 7;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-const SESSION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes (for testing - change to 3 * 60 * 60 * 1000 for production)
-const TWO_FA_GRACE_PERIOD_MS = 10 * 1000; // 10 seconds (for testing - change to 7 * 24 * 60 * 60 * 1000 for production)
+const SESSION_TIMEOUT_MS = 3 * 60 * 60 * 1000; // 3 hours
+const TWO_FA_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
 
 // Rate limiting for login attempts
 export const checkRateLimit = (email: string): { allowed: boolean; remainingAttempts?: number; lockoutMinutes?: number } => {
