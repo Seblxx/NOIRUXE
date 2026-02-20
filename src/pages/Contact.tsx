@@ -346,7 +346,7 @@ export const Contact = () => {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-3 rounded-lg border border-red-500/50 bg-red-500/10 text-red-400 text-sm text-center"
+                  className="mb-6 p-3 rounded-lg border border-red-500/50 bg-red-500/10 text-white text-sm text-center"
                   style={{ fontFamily: "'GT Pressura', sans-serif" }}
                 >
                   {error}

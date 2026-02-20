@@ -347,22 +347,22 @@ export const Testimonials = () => {
       <SimpleMenu items={menuItems} isExpanded={true} />
 
       {/* Main content - fixed viewport, no scroll, vertically centered */}
-      <div className="relative z-10 h-screen flex flex-col items-center justify-center px-8">
+      <div className="relative z-10 h-screen flex flex-col items-center justify-center px-4 py-6">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-6 text-center flex-shrink-0"
+          className="mb-3 text-center flex-shrink-0"
         >
           <h1
-            className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none"
+            className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-none"
             style={{ fontFamily: "'GT Pressura', sans-serif" }}
           >
             <GlitchText text="TESTIMONIALS" />
           </h1>
           <p
-            className="mt-2 text-sm tracking-widest uppercase"
+            className="mt-1 text-xs tracking-widest uppercase"
             style={{ fontFamily: "'GT Pressura', sans-serif", color: 'rgba(255,255,255,0.7)' }}
           >
             <T>What people say</T>
@@ -375,7 +375,7 @@ export const Testimonials = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex gap-2 mb-4 flex-shrink-0"
+            className="flex gap-2 mb-2 flex-shrink-0"
           >
             <button
               onClick={() => setActiveTab('public')}
@@ -406,7 +406,7 @@ export const Testimonials = () => {
 
         {/* ==================== PUBLIC VIEW ==================== */}
         {activeTab === 'public' && (
-          <div className="w-full max-w-5xl flex flex-col">
+          <div className="w-full max-w-5xl flex flex-col min-h-0 flex-1">
             {loadingPublic ? (
               <div className="flex-1 flex justify-center items-center">
                 <div className="w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full animate-spin" />
@@ -433,22 +433,22 @@ export const Testimonials = () => {
             ) : (
               <>
                 {/* Cards with arrows */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 min-h-0 flex-1 overflow-hidden">
                   {/* Left Arrow */}
                   {publicTotalPages > 1 && (
                     <motion.button
                       onClick={() => setPublicPage((prev) => (prev - 1 + publicTotalPages) % publicTotalPages)}
                       whileHover={{ scale: 1.1, x: -3 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all"
+                      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all"
                       style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
                     >
-                      <ChevronLeft size={28} />
+                      <ChevronLeft size={24} />
                     </motion.button>
                   )}
 
                   {/* Testimonials grid - single column on mobile */}
-                  <div className="flex-1 grid grid-cols-1 gap-4 min-h-0">
+                  <div className="flex-1 grid grid-cols-1 gap-3 min-h-0 overflow-y-auto">
                     <AnimatePresence mode="wait">
                       {publicItems.map((t) => (
                         <motion.div
@@ -457,16 +457,16 @@ export const Testimonials = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           transition={{ duration: 0.3 }}
-                          className="group relative bg-black/60 backdrop-blur-xl rounded-lg p-6 border border-white/10 hover:border-white/20 transition-all duration-500"
+                          className="group relative bg-black/60 backdrop-blur-xl rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all duration-500"
                           style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}
                         >
                           <p
-                            className="text-white text-sm leading-relaxed mb-4 relative z-10"
+                            className="text-white text-sm leading-relaxed mb-3 relative z-10"
                             style={{ fontFamily: "'GT Pressura', sans-serif" }}
                           >
                             &quot;{language === 'fr' ? (t.testimonial_text_fr || t.testimonial_text_en) : t.testimonial_text_en}&quot;
                           </p>
-                          <div className="pt-3 border-t border-white/10">
+                          <div className="pt-2 border-t border-white/10">
                             <p
                               className="text-white text-xs font-medium tracking-wider uppercase"
                               style={{ fontFamily: "'GT Pressura', sans-serif" }}
@@ -485,17 +485,17 @@ export const Testimonials = () => {
                       onClick={() => setPublicPage((prev) => (prev + 1) % publicTotalPages)}
                       whileHover={{ scale: 1.1, x: 3 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all"
+                      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all"
                       style={{ border: '1px solid rgba(0,255,255,0.5)', backgroundColor: 'rgba(0,0,0,0.8)', color: '#22d3ee' }}
                     >
-                      <ChevronRight size={28} />
+                      <ChevronRight size={24} />
                     </motion.button>
                   )}
                 </div>
 
                 {/* Page indicator */}
                 {publicTotalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-4 flex-shrink-0">
+                  <div className="flex justify-center gap-2 mt-2 flex-shrink-0">
                     {Array.from({ length: publicTotalPages }).map((_, i) => (
                       <button
                         key={i}
@@ -512,16 +512,16 @@ export const Testimonials = () => {
                 )}
 
                 {/* Write a Testimonial button */}
-                <div className="flex justify-center mt-3 flex-shrink-0">
+                <div className="flex justify-center mt-2 flex-shrink-0">
                   {!showForm && !submitSuccess && (
                     <motion.button
                       onClick={() => setShowForm(true)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="px-6 py-2 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-3"
+                      className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2"
                       style={{ fontFamily: "'GT Pressura', sans-serif", letterSpacing: '0.15em' }}
                     >
-                      <MessageSquareQuote size={16} />
+                      <MessageSquareQuote size={14} />
                       <span className="text-xs uppercase tracking-widest"><T>Write a Testimonial</T></span>
                     </motion.button>
                   )}
@@ -534,7 +534,7 @@ export const Testimonials = () => {
 
         {/* ==================== ADMIN PANEL ==================== */}
         {activeTab === 'admin' && isAdmin && (
-          <div className="w-full max-w-5xl flex flex-col">
+          <div className="w-full max-w-5xl flex flex-col min-h-0 flex-1">
             {/* Filter buttons */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
