@@ -254,6 +254,7 @@ const FileUploadField = ({
           <div className="flex flex-col items-center justify-center py-3 gap-1.5">
             <Upload size={22} style={{ color: 'rgba(255,255,255,0.5)' }} />
             <span className="text-xs" style={{ ...font, color: 'rgba(255,255,255,0.6)' }}>{multiple ? 'Click or drag files' : 'Click or drag a file'}</span>
+            <span className="text-[10px]" style={{ ...font, color: 'rgba(255,255,255,0.35)' }}>limit 50MB</span>
           </div>
         )}
       </div>
